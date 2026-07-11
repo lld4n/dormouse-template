@@ -31,6 +31,36 @@ async function readLastProcessed(): Promise<number> {
 }
 
 /**
+ * Lists `raw/yandex-music/*.json` snapshot files, oldest first (by
+ * filename-as-date — see `saveSnapshot`'s `<YYYY-MM-DD>.json` naming).
+ *
+ * `RAW_DIR` isn't committed to the repo (see `scripts/README.md` — `raw/`
+ * and `data/` are instance-specific, gitignored-by-omission rather than
+ * shipped as empty placeholder directories) and every write path under it
+ * auto-creates its own parent directories via `Bun.write`, so the only
+ * place a missing directory needs explicit handling is this read: treat
+ * "directory doesn't exist" the same as "directory exists but is empty"
+ * (no snapshots have ever been fetched yet) rather than letting `readdir`
+ * throw `ENOENT`.
+ */
+async function listRawSnapshots(): Promise<{ name: string; ts: number }[]> {
+    let entries: string[];
+    try {
+        entries = await readdir(RAW_DIR);
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return [];
+        }
+        throw error;
+    }
+
+    return entries
+        .filter((f) => f.endsWith('.json'))
+        .map((f) => ({ name: f, ts: new Date(f.replace('.json', '')).getTime() }))
+        .sort((a, b) => a.ts - b.ts);
+}
+
+/**
  * `Connector.normalize` implementation for Yandex Music (see `types.ts`).
  * Orchestrates the raw -> normalized transform:
  *
@@ -54,11 +84,7 @@ async function readLastProcessed(): Promise<number> {
 export async function normalizeYandexMusic(): Promise<void> {
     const lastProcessed = await readLastProcessed();
 
-    const allFiles = (await readdir(RAW_DIR))
-        .filter((f) => f.endsWith('.json'))
-        .map((f) => ({ name: f, ts: new Date(f.replace('.json', '')).getTime() }))
-        .sort((a, b) => a.ts - b.ts);
-
+    const allFiles = await listRawSnapshots();
     const newFiles = allFiles.filter(({ ts }) => ts > lastProcessed);
 
     if (newFiles.length === 0) {

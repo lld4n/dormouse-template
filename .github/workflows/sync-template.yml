@@ -1,0 +1,147 @@
+# Pulls updates from the upstream template (lld4n/dormouse-template) into
+# this repo, so repos created via "Use this template" aren't stuck on a
+# snapshot of the template forever.
+#
+# - Clean merge (no conflicts): pushed straight to the default branch, no
+#   PR, no review step — see the discussion that led here for why.
+# - Conflicting merge: pushed to the `template-sync` branch as-is (with
+#   conflict markers) and a GitHub issue is opened describing it. That
+#   issue is the durable "someone needs to look at this" signal — check
+#   this repo's open issues (or `gh issue list --state open`) to find
+#   repos with an unresolved sync conflict, and the issue body/GitHub
+#   notification is what tells the repo owner to fix and push it.
+# - While that issue is open, the workflow no-ops on every subsequent run
+#   rather than re-merging — a fresh merge would blow away any manual
+#   conflict-resolution commits already pushed to `template-sync`. Once
+#   the branch is merged into the default branch, the next run detects
+#   that, closes the issue, and resumes normal syncing automatically.
+#
+# `raw/` and `data/` need no special handling to stay out of this: the
+# template repo's own history never touches those paths (see
+# scripts/README.md — they're instance-specific and gitignored-by-omission,
+# auto-created at runtime), so a merge from it can never add, modify, or
+# delete anything under them here.
+#
+# Disabled in the template itself via the same `is_template` guard as
+# data-pipeline.yml — see that file's header comment for how/why it works
+# with zero edits needed in repos generated from this template.
+name: Sync Template
+
+on:
+    schedule:
+        - cron: '0 2 * * 1'
+    workflow_dispatch: {}
+
+permissions:
+    contents: write
+    issues: write
+
+concurrency:
+    group: sync-template
+    cancel-in-progress: false
+
+env:
+    GH_TOKEN: ${{ github.token }}
+    TEMPLATE_URL: https://github.com/lld4n/dormouse-template.git
+    BRANCH: template-sync
+    ISSUE_TITLE: Template sync has conflicts
+
+jobs:
+    sync:
+        if: ${{ !github.event.repository.is_template }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            # Look for an open conflict issue from a previous run. If there is
+            # one, check whether `template-sync` has since been merged into the
+            # default branch (i.e. the owner resolved and pushed it) — if so,
+            # close the issue and fall through to a normal sync; otherwise skip
+            # this run entirely so we never overwrite unresolved manual work.
+            - name: Resolve or detect an existing conflict issue
+              id: existing
+              run: |
+                  number=$(gh issue list --state open --json number,title --jq '.[] | select(.title == "'"$ISSUE_TITLE"'") | .number' | head -n1)
+
+                  if [ -z "$number" ]; then
+                    echo "open=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+
+                  default_branch="${{ github.event.repository.default_branch }}"
+                  if git ls-remote --exit-code origin "$BRANCH" >/dev/null 2>&1 && \
+                     git fetch origin "$BRANCH" "$default_branch" -q && \
+                     git merge-base --is-ancestor "origin/$BRANCH" "origin/$default_branch"; then
+                    gh issue close "$number" --comment "Resolved — \`$BRANCH\` is merged into \`$default_branch\`. Resuming automatic syncing."
+                    echo "open=false" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "open=true" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Merge template changes
+              if: steps.existing.outputs.open == 'false'
+              id: merge
+              run: |
+                  git config user.name "dormouse"
+                  git config user.email "dormouse@mail.com"
+
+                  upstream_branch=$(git ls-remote --symref "$TEMPLATE_URL" HEAD | awk '/^ref:/ { sub("refs/heads/", "", $2); print $2 }')
+                  git remote add template "$TEMPLATE_URL"
+                  git fetch template "$upstream_branch"
+
+                  git switch -C "$BRANCH"
+
+                  if git merge --allow-unrelated-histories --no-edit "template/$upstream_branch"; then
+                    echo "conflicts=false" >> "$GITHUB_OUTPUT"
+                  else
+                    {
+                      echo "files<<CONFLICT_FILES_EOF"
+                      git diff --name-only --diff-filter=U
+                      echo "CONFLICT_FILES_EOF"
+                    } >> "$GITHUB_OUTPUT"
+                    git add -A
+                    git commit -m "chore: merge template (unresolved conflicts)"
+                    echo "conflicts=true" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Push clean merge straight to the default branch
+              if: steps.existing.outputs.open == 'false' && steps.merge.outputs.conflicts == 'false'
+              run: |
+                  default_branch="${{ github.event.repository.default_branch }}"
+                  if git diff --quiet HEAD "origin/$default_branch"; then
+                    echo "Nothing new from the template."
+                    exit 0
+                  fi
+                  git push origin "$BRANCH:$default_branch"
+
+            - name: Push conflicted branch and open an issue
+              if: steps.existing.outputs.open == 'false' && steps.merge.outputs.conflicts == 'true'
+              run: |
+                  git push origin "$BRANCH" --force
+
+                  default_branch="${{ github.event.repository.default_branch }}"
+                  files="${{ steps.merge.outputs.files }}"
+
+                  body=$(cat <<EOF
+                  Syncing changes from $TEMPLATE_URL into \`$BRANCH\` produced merge conflicts in:
+
+                  $files
+
+                  To resolve:
+
+                  \`\`\`
+                  git fetch origin $BRANCH
+                  git checkout $BRANCH
+                  # fix the conflicts, then:
+                  git add .
+                  git commit
+                  git push origin $BRANCH
+                  \`\`\`
+
+                  Then merge \`$BRANCH\` into \`$default_branch\` (PR or direct push). The next scheduled sync run will notice it's merged and close this issue automatically.
+                  EOF
+                  )
+
+                  gh issue create --title "$ISSUE_TITLE" --body "$body"

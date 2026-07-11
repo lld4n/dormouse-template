@@ -32,6 +32,19 @@ is the durable handoff point between them, and is never rewritten by
 `normalize` (so it doubles as full replay history if normalization logic
 changes later).
 
+`raw/` and `data/` are NOT part of this repo's tracked files (no
+placeholder/`.gitkeep` directories either) — they're instance-specific
+output, not template content. Every write path creates its own parent
+directories on demand via `Bun.write` (which does this automatically), and
+the one read that used to assume `raw/<service>/` already existed
+(`normalize/index.ts` listing snapshot files) now treats a missing
+directory the same as an empty one. So a completely fresh checkout with
+neither directory present works correctly: `update` creates `raw/...` on
+its first successful fetch, `normalize` creates `data/...` on its first
+run with something to process. This is also what makes it safe to delete
+these directories from the template outright — see "The sync workflow"
+below for why that matters.
+
 Both entry points iterate every connector and keep going if one fails —
 each failure is logged as an `error` rather than thrown immediately, so one
 broken/rate-limited API doesn't block the others. The process as a whole
@@ -122,6 +135,41 @@ Two one-time manual steps this can't automate away:
   secrets from a template. Until it's added, `update` just skips that
   connector (see `updateAll`'s missing-token handling) rather than
   failing the run.
+
+## The sync workflow
+
+Repos created via "Use this template" get a one-time copy of this repo's
+files, not an ongoing link to it — GitHub doesn't keep them updated the
+way a fork stays connected to its upstream.
+[`.github/workflows/sync-template.yml`](../.github/workflows/sync-template.yml)
+closes that gap: on a schedule (and via manual `workflow_dispatch`), it
+merges `https://github.com/lld4n/dormouse-template.git`'s default branch
+in, so template improvements can flow into a repo generated from it
+without hand-copying files. Guarded by the same `is_template` check as the
+data pipeline workflow, for the same reason.
+
+There's no PR/review step for the common case: a clean merge is pushed
+straight to the default branch. Only a conflicting merge gets special
+treatment — it's pushed to a `template-sync` branch as-is (with conflict
+markers left in place) and a GitHub issue titled "Template sync has
+conflicts" is opened describing what to do. That issue is the durable
+signal for "this repo needs a human" — check a repo's open issues (or
+`gh issue list --state open`) to find ones with an unresolved sync
+conflict; the issue itself (plus GitHub's own notification for it) is
+what tells the repo owner to fix and push it. While that issue stays open,
+every subsequent run no-ops instead of re-merging, so it never clobbers
+manual conflict-resolution commits already pushed to `template-sync`.
+Once that branch is merged into the default branch, the next run detects
+the resolution, closes the issue itself, and resumes normal syncing.
+
+This is exactly why `raw/`/`data/` had to stop being tracked in this repo
+(see above): the template's own git history never touches those paths, so
+a merge from it can never add, modify, or delete anything under them in a
+generated repo, no matter how much real data has accumulated there. If
+the template still shipped `.gitkeep` placeholders under `data/<entity>/`,
+every sync would at minimum carry those paths as shared history to
+reconcile against — harmless most of the time, but exactly the kind of
+per-repo divergence a template-sync merge shouldn't need to think about.
 
 ## Adding a new connector
 
