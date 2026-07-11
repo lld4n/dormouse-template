@@ -1,4 +1,4 @@
-# dormouse
+# dormouse 🐭
 
 A personal-data archival template: periodically pulls your activity
 history from external services (currently Yandex Music listening
