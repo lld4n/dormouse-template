@@ -1,4 +1,19 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# dormouse
+
+A personal-data archival template: periodically pulls your activity
+history from external services (currently Yandex Music listening
+history) and keeps a deduplicated, versioned record of it in this
+repository via scheduled GitHub Actions. See [`scripts/README.md`](scripts/README.md)
+for how the update/normalize pipeline works and how to add another
+connector.
+
+Click "Use this template" to get your own copy — see that repo's
+`.github/workflows/` for the automation, and its Actions secrets for the
+one thing you have to configure yourself (the connector's API token).
+
+## Next.js app
+
+The rest of this repo is also a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app), for building a UI on top of the archived data.
 
 ## Getting Started
 
