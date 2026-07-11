@@ -1,0 +1,65 @@
+# Runs the update/normalize pipeline (see scripts/README.md) on a schedule
+# and commits any resulting raw/data changes back to the repo.
+#
+# Disabled on purpose in THIS repo (the template): the `if:` guard below
+# checks `github.event.repository.is_template`, which GitHub sets to
+# `true` only for a repo with the "Template repository" setting enabled
+# (Settings -> General -> Template repository) — i.e. this repo itself.
+# Any repo created via "Use this template" starts with that setting off,
+# so the guard evaluates to `true` there automatically and the pipeline
+# runs with zero edits to this file. No repo name/owner is hardcoded, so
+# this keeps working even if the template or the generated repo gets
+# renamed/transferred.
+#
+# One thing that can't be automated away: YANDEX_MUSIC_TOKEN must be added
+# as a repository secret in each new repo (Settings -> Secrets and
+# variables -> Actions) — GitHub never copies secrets from a template.
+# Until it's added, the `update` step just skips that connector (see
+# scripts/update.ts) rather than failing the run.
+name: Data Pipeline
+
+on:
+    schedule:
+        # 03:00 Moscow time (UTC+3) — cron runs in UTC, so that's 00:00 UTC.
+        - cron: '0 0 * * *'
+    workflow_dispatch: {}
+
+permissions:
+    contents: write
+
+concurrency:
+    group: data-pipeline
+    cancel-in-progress: false
+
+jobs:
+    update-and-normalize:
+        if: ${{ !github.event.repository.is_template }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - run: bun install --frozen-lockfile
+
+            - name: Update
+              env:
+                  YANDEX_MUSIC_TOKEN: ${{ secrets.YANDEX_MUSIC_TOKEN }}
+              run: bun run update
+
+            - name: Normalize
+              run: bun run normalize
+
+            - name: Commit and push data
+              run: |
+                  git config user.name "dormouse"
+                  git config user.email "dormouse@mail.com"
+                  git add raw data
+                  if git diff --cached --quiet; then
+                    echo "No data changes to commit."
+                  else
+                    git commit -m "chore: sync data $(date -u +%Y-%m-%d)"
+                    git push
+                  fi

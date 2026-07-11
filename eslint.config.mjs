@@ -1,18 +1,24 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import antfu from '@antfu/eslint-config';
+import prettierConflicts from 'eslint-config-prettier';
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
+export default antfu(
+    {
+        type: 'app',
+        react: true,
+        nextjs: true,
+        typescript: true,
 
-export default eslintConfig;
+        // Formatting is owned by Prettier — keep ESLint focused on correctness/logic rules only.
+        stylistic: false,
+        formatters: false,
+
+        ignores: ['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'raw/**'],
+    },
+    prettierConflicts,
+    {
+        rules: {
+            // We're ESM-only (Bun/Next); the global `process` is the idiomatic way to reach it.
+            'node/prefer-global/process': 'off',
+        },
+    },
+);
