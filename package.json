@@ -6,8 +6,6 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "update": "bun run scripts/update.ts",
-        "normalize": "bun run scripts/normalize.ts",
         "lint:eslint": "eslint .",
         "lint:eslint:fix": "eslint . --fix",
         "lint:prettier": "prettier --check .",

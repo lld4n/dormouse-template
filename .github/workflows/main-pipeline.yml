@@ -1,4 +1,5 @@
-# Runs the update/normalize pipeline (see scripts/README.md) on a schedule
+# Runs the whole data pipeline (see scripts/README.md) on a schedule —
+# one `bun run scripts/main.ts` call that does update then normalize —
 # and commits any resulting raw/data changes back to the repo.
 #
 # Disabled on purpose in THIS repo (the template): the `if:` guard below
@@ -11,12 +12,21 @@
 # this keeps working even if the template or the generated repo gets
 # renamed/transferred.
 #
-# One thing that can't be automated away: YANDEX_MUSIC_TOKEN must be added
-# as a repository secret in each new repo (Settings -> Secrets and
-# variables -> Actions) — GitHub never copies secrets from a template.
-# Until it's added, the `update` step just skips that connector (see
-# scripts/update.ts) rather than failing the run.
-name: Data Pipeline
+# Secrets are passed wholesale as one JSON blob via
+# `SECRETS_CONTEXT: ${{ toJSON(secrets) }}` and unpacked into the
+# environment by scripts/main.ts. That keeps this file connector-agnostic:
+# a connector with a new token needs a new repository secret (Settings ->
+# Secrets and variables -> Actions), not an edit here. This matters
+# doubly because sync-template.yml deliberately never syncs
+# `.github/workflows/` — a workflow edit would otherwise have to be
+# hand-copied into every generated repo.
+#
+# One thing that can't be automated away: connector secrets (currently
+# YANDEX_MUSIC_TOKEN) must be added in each new repo — GitHub never
+# copies secrets from a template. Until a secret is added, the pipeline
+# just skips that connector (see scripts/update.ts) rather than failing
+# the run.
+name: Main Pipeline
 
 on:
     schedule:
@@ -28,11 +38,11 @@ permissions:
     contents: write
 
 concurrency:
-    group: data-pipeline
+    group: main-pipeline
     cancel-in-progress: false
 
 jobs:
-    update-and-normalize:
+    main:
         if: ${{ !github.event.repository.is_template }}
         runs-on: ubuntu-latest
         steps:
@@ -44,13 +54,10 @@ jobs:
 
             - run: bun install --frozen-lockfile
 
-            - name: Update
+            - name: Update and normalize
               env:
-                  YANDEX_MUSIC_TOKEN: ${{ secrets.YANDEX_MUSIC_TOKEN }}
-              run: bun run update
-
-            - name: Normalize
-              run: bun run normalize
+                  SECRETS_CONTEXT: ${{ toJSON(secrets) }}
+              run: bun run scripts/main.ts
 
             - name: Commit and push data
               run: |

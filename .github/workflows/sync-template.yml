@@ -20,6 +20,22 @@
 #   the next run detects it, closes the issue, resets the status file to
 #   "clean", and resumes normal syncing automatically.
 #
+# `.github/workflows/` is deliberately NEVER synced: after every merge
+# (clean or conflicted) that path is forced back to this repo's own
+# pre-merge state, so template-side workflow changes don't propagate and
+# can't conflict. Two reasons: GITHUB_TOKEN is forbidden by GitHub from
+# pushing changes to workflow files (deliberate anti-privilege-escalation
+# behavior, no `permissions:` key unlocks it — the alternative is a
+# per-repo PAT secret, which is exactly the kind of manual setup this
+# template tries to avoid), and a workflow that rewrites itself mid-run
+# is a footgun anyway. The cost: a workflow improvement in the template
+# has to be hand-copied into generated repos. Note this is done with a
+# post-merge restore (`git checkout --no-overlay HEAD -- ...`), not a
+# `.gitattributes` merge driver — custom merge drivers only fire on
+# conflicting files, while a file changed only on the template side gets
+# taken wholesale by the trivial three-way merge without ever consulting
+# the driver.
+#
 # `raw/` and `data/<connector>/` need no special handling to stay out of
 # this: the template repo's own history never touches those paths (see
 # scripts/README.md — they're instance-specific and gitignored-by-omission,
@@ -29,7 +45,7 @@
 # template, so it's equally immune.
 #
 # Disabled in the template itself via the same `is_template` guard as
-# data-pipeline.yml — see that file's header comment for how/why it works
+# main-pipeline.yml — see that file's header comment for how/why it works
 # with zero edits needed in repos generated from this template.
 name: Sync Template
 
@@ -41,14 +57,6 @@ on:
 permissions:
     contents: write
     issues: write
-    # Required whenever a merge touches .github/workflows/* — which will
-    # happen routinely, since this very file is exactly the kind of thing
-    # that legitimately needs to sync from the template. Without this,
-    # GITHUB_TOKEN can push everywhere except that one directory: "refusing
-    # to allow a GitHub App to create or update workflow ... without
-    # `workflows` permission" (verified against a real conflicting sync
-    # run before this permission was added).
-    workflows: write
 
 concurrency:
     group: sync-template
@@ -121,17 +129,39 @@ jobs:
 
                   git switch -C "$BRANCH"
 
-                  if git merge --allow-unrelated-histories --no-edit "template/$upstream_branch"; then
+                  # --no-commit so `.github/workflows/` can be forced back to
+                  # this repo's version before anything is recorded — see the
+                  # header comment for why that path is never synced. The
+                  # `--no-overlay` checkout makes the path *exactly* match
+                  # HEAD: it overwrites modified files, resurrects deleted
+                  # ones, drops template-added ones, and resolves any
+                  # conflicted ones to our side, all in one command.
+                  if git merge --allow-unrelated-histories --no-ff --no-commit "template/$upstream_branch"; then
+                    if [ -f .git/MERGE_HEAD ]; then
+                      git checkout --no-overlay HEAD -- .github/workflows
+                      git commit --no-edit
+                    fi
                     echo "conflicts=false" >> "$GITHUB_OUTPUT"
                   else
-                    {
-                      echo "files<<CONFLICT_FILES_EOF"
-                      git diff --name-only --diff-filter=U
-                      echo "CONFLICT_FILES_EOF"
-                    } >> "$GITHUB_OUTPUT"
-                    git add -A
-                    git commit -m "chore: merge template (unresolved conflicts)"
-                    echo "conflicts=true" >> "$GITHUB_OUTPUT"
+                    git checkout --no-overlay HEAD -- .github/workflows
+                    conflict_files=$(git diff --name-only --diff-filter=U)
+
+                    if [ -z "$conflict_files" ]; then
+                      # Every conflict was inside .github/workflows and the
+                      # restore just resolved them all — this is a clean merge.
+                      git add -A
+                      git commit --no-edit
+                      echo "conflicts=false" >> "$GITHUB_OUTPUT"
+                    else
+                      {
+                        echo "files<<CONFLICT_FILES_EOF"
+                        echo "$conflict_files"
+                        echo "CONFLICT_FILES_EOF"
+                      } >> "$GITHUB_OUTPUT"
+                      git add -A
+                      git commit -m "chore: merge template (unresolved conflicts)"
+                      echo "conflicts=true" >> "$GITHUB_OUTPUT"
+                    fi
                   fi
 
             - name: Push clean merge straight to the default branch

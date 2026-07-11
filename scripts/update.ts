@@ -56,7 +56,3 @@ export async function updateAll(): Promise<void> {
         process.exitCode = 1;
     }
 }
-
-if (import.meta.main) {
-    await updateAll();
-}

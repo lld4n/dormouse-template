@@ -45,25 +45,26 @@ run with something to process. This is also what makes it safe to delete
 these directories from the template outright — see "The sync workflow"
 below for why that matters.
 
-Both entry points iterate every connector and keep going if one fails —
-each failure is logged as an `error` rather than thrown immediately, so one
+Both phases iterate every connector and keep going if one fails — each
+failure is logged as an `error` rather than thrown immediately, so one
 broken/rate-limited API doesn't block the others. The process as a whole
 still fails, though: see "Logging & CI" below.
 
-Both `update.ts` and `normalize.ts` are directly runnable
-(`bun run scripts/update.ts` / `bun run scripts/normalize.ts`, or
-`bun run update` / `bun run normalize` via the `package.json` scripts) as
-well as importable — each guards its top-level call with
-`if (import.meta.main)`.
+The single entry point is [`main.ts`](main.ts)
+(`bun run scripts/main.ts`): it loads secrets (see "The scheduled
+workflow" below), then runs `updateAll` followed by `normalizeAll` in one
+process. `update.ts` and `normalize.ts` only export those functions —
+they are not runnable on their own.
 
 ## Directory structure
 
 ```
 scripts/
-  update.ts              Phase 1 orchestrator (updateAll)
-  normalize.ts            Phase 2 orchestrator (normalizeAll)
-  sync-status.ts           CLI called by sync-template.yml — writes
-                             data/extra/template-sync-status.json
+  main.ts                Entry point: secrets loading + updateAll + normalizeAll
+  update.ts               Phase 1 orchestrator (updateAll)
+  normalize.ts             Phase 2 orchestrator (normalizeAll)
+  sync-status.ts            CLI called by sync-template.yml — writes
+                              data/extra/template-sync-status.json
   connectors/
     types.ts              The `Connector` contract every connector implements
     registry.ts            CONNECTORS array — the only place connectors get wired in
@@ -115,10 +116,20 @@ whole point of leveling up logging for CI is that failures can't hide.
 
 ## The scheduled workflow
 
-[`.github/workflows/data-pipeline.yml`](../.github/workflows/data-pipeline.yml)
-runs `bun run update` then `bun run normalize` on a cron schedule (and via
-manual `workflow_dispatch`), then commits any resulting `raw/`/`data/`
-changes back to the repo.
+[`.github/workflows/main-pipeline.yml`](../.github/workflows/main-pipeline.yml)
+runs `bun run scripts/main.ts` on a cron schedule (and via manual
+`workflow_dispatch`), then commits any resulting `raw/`/`data/` changes
+back to the repo.
+
+Secrets reach the pipeline as one JSON blob: the workflow sets
+`SECRETS_CONTEXT: ${{ toJSON(secrets) }}` and `main.ts` unpacks every
+entry into `process.env` (never overwriting a var that's already set),
+which is where connectors look for their tokens. So the workflow file
+never names individual secrets — a new connector's token is wired up by
+adding a repository secret alone, with no workflow edit. That matters
+because sync-template.yml never syncs `.github/workflows/` (see below):
+if the workflow had to enumerate secrets, every new connector would
+require hand-editing the workflow in every generated repo.
 
 It's intentionally inert in this repo — the job is guarded by
 `if: ${{ !github.event.repository.is_template }}`, which is only `true`
@@ -148,7 +159,14 @@ closes that gap: on a schedule (and via manual `workflow_dispatch`), it
 merges `https://github.com/lld4n/dormouse-template.git`'s default branch
 in, so template improvements can flow into a repo generated from it
 without hand-copying files. Guarded by the same `is_template` check as the
-data pipeline workflow, for the same reason.
+main pipeline workflow, for the same reason.
+
+One deliberate exception: `.github/workflows/` is never synced — after
+every merge that path is forced back to the repo's own pre-merge state
+(and conflicts inside it are auto-resolved to the local side). See the
+header comment in `sync-template.yml` for the mechanics and the
+GITHUB_TOKEN restriction that motivates it. The flip side: template-side
+workflow improvements must be hand-copied into generated repos.
 
 There's no PR/review step for the common case: a clean merge is pushed
 straight to the default branch. Only a conflicting merge gets special
