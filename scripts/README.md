@@ -62,6 +62,8 @@ well as importable — each guards its top-level call with
 scripts/
   update.ts              Phase 1 orchestrator (updateAll)
   normalize.ts            Phase 2 orchestrator (normalizeAll)
+  sync-status.ts           CLI called by sync-template.yml — writes
+                             data/extra/template-sync-status.json
   connectors/
     types.ts              The `Connector` contract every connector implements
     registry.ts            CONNECTORS array — the only place connectors get wired in
@@ -152,15 +154,24 @@ There's no PR/review step for the common case: a clean merge is pushed
 straight to the default branch. Only a conflicting merge gets special
 treatment — it's pushed to a `template-sync` branch as-is (with conflict
 markers left in place) and a GitHub issue titled "Template sync has
-conflicts" is opened describing what to do. That issue is the durable
-signal for "this repo needs a human" — check a repo's open issues (or
-`gh issue list --state open`) to find ones with an unresolved sync
-conflict; the issue itself (plus GitHub's own notification for it) is
-what tells the repo owner to fix and push it. While that issue stays open,
+conflicts" is opened describing what to do. That issue is the
+human-facing signal (GitHub's own notification for it is what actually
+tells the repo owner to fix and push it). While that issue stays open,
 every subsequent run no-ops instead of re-merging, so it never clobbers
 manual conflict-resolution commits already pushed to `template-sync`.
 Once that branch is merged into the default branch, the next run detects
 the resolution, closes the issue itself, and resumes normal syncing.
+
+There's also a machine-facing signal: [`scripts/sync-status.ts`](sync-status.ts)
+writes `data/extra/template-sync-status.json` on the default branch every
+time the sync workflow determines (or resolves) a clean/conflict state.
+Checking a repo's sync status — across one repo or scripted across many —
+is then a single file read (`gh api repos/<owner>/<repo>/contents/data/extra/template-sync-status.json`,
+or just `git show origin/<default>:data/extra/template-sync-status.json`)
+instead of an Issues API query with title matching. Like `raw/`/`data/<connector>/`,
+this file is generated at runtime and never shipped by the template, so
+template syncs can never touch it either — see that script's header
+comment for the full schema.
 
 This is exactly why `raw/`/`data/` had to stop being tracked in this repo
 (see above): the template's own git history never touches those paths, so
