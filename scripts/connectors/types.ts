@@ -20,7 +20,12 @@ export enum ConnectorService {
  *      `data/` transform), mirroring the `yandex-music/` folder.
  *   3. Export a `Connector` object (see `yandex-music/index.ts`) and add it
  *      to the `CONNECTORS` array in `registry.ts`. That's the only place
- *      `update.ts`/`normalize.ts` at the repo root need to know about it.
+ *      `scripts/update.ts`/`scripts/normalize.ts` need to know about it.
+ *   4. In each repo that should run it, add a repository secret named
+ *      exactly like the connector's `token` field (Settings -> Secrets and
+ *      variables -> Actions). Nothing else: main-pipeline.yml forwards ALL
+ *      repository secrets via `SECRETS_CONTEXT`, so the workflow file
+ *      doesn't need editing.
  */
 export interface Connector {
     /** Identifies the connector and its on-disk directories; must be a `ConnectorService` value. */

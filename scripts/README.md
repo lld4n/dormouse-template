@@ -15,11 +15,11 @@ external API  --update-->  raw/<service>/<YYYY-MM-DD>.json  --normalize-->  data
                 (fetch)              (immutable archive)         (dedup + model)
 ```
 
-- **`update`** (entry: [`update.ts`](update.ts) -> `updateAll`): for each
+- **`update`** ([`update.ts`](update.ts) -> `updateAll`): for each
   registered connector, fetch fresh data from its external API and archive
   it as-is via [`shared/save-snapshot.ts`](shared/save-snapshot.ts). Never
   touches `data/`.
-- **`normalize`** (entry: [`normalize.ts`](normalize.ts) -> `normalizeAll`):
+- **`normalize`** ([`normalize.ts`](normalize.ts) -> `normalizeAll`):
   for each connector, read whatever `raw/` snapshots haven't been processed
   yet, transform them into that connector's entity models, and merge the
   result into `data/`. Idempotent and incremental — each connector tracks
@@ -143,11 +143,11 @@ Two one-time manual steps this can't automate away:
 
 - **This repo**: "Template repository" must actually be checked in
   Settings -> General for the guard above to hold — verify it's on here.
-- **Every generated repo**: add a `YANDEX_MUSIC_TOKEN` repository secret
-  (Settings -> Secrets and variables -> Actions). GitHub never copies
-  secrets from a template. Until it's added, `update` just skips that
-  connector (see `updateAll`'s missing-token handling) rather than
-  failing the run.
+- **Every generated repo**: add each connector's repository secret
+  (currently just `YANDEX_MUSIC_TOKEN`) in Settings -> Secrets and
+  variables -> Actions. GitHub never copies secrets from a template.
+  Until it's added, `update` just skips that connector (see `updateAll`'s
+  missing-token handling) rather than failing the run.
 
 ## The sync workflow
 
@@ -208,7 +208,9 @@ See the full checklist in the `Connector` JSDoc in
 `yandex-music/`'s shape, export a `Connector` object from its `index.ts`,
 and add that object to `CONNECTORS` in
 [`connectors/registry.ts`](connectors/registry.ts). Nothing in
-`update.ts`/`normalize.ts` needs to change.
+`update.ts`/`normalize.ts` — or in the workflow files — needs to change;
+the only per-repo step is adding the new token as a repository secret
+(it reaches the pipeline via `SECRETS_CONTEXT` automatically).
 
 ## Adding a new normalized entity type within a connector
 
