@@ -41,6 +41,14 @@ on:
 permissions:
     contents: write
     issues: write
+    # Required whenever a merge touches .github/workflows/* — which will
+    # happen routinely, since this very file is exactly the kind of thing
+    # that legitimately needs to sync from the template. Without this,
+    # GITHUB_TOKEN can push everywhere except that one directory: "refusing
+    # to allow a GitHub App to create or update workflow ... without
+    # `workflows` permission" (verified against a real conflicting sync
+    # run before this permission was added).
+    workflows: write
 
 concurrency:
     group: sync-template
