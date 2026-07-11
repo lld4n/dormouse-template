@@ -1,6 +1,6 @@
 # dormouse 🐭
 
-A personal-data archival template: periodically pulls your activity
+A personal-data archival template for hoarders: periodically pulls your activity
 history from external services (currently Yandex Music listening
 history) and keeps a deduplicated, versioned record of it in this
 repository via scheduled GitHub Actions. See [`scripts/README.md`](scripts/README.md)
