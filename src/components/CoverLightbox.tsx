@@ -81,6 +81,7 @@ export function CoverLightbox({
                     height={thumbSize}
                     className={thumbClassName}
                     priority
+                    unoptimized
                 />
             </button>
             <dialog

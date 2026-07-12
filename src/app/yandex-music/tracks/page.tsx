@@ -8,6 +8,7 @@ import { ButtonLink } from '@/components/ui/ButtonLink';
 import { coverUrl, getTracksIndex } from '@/lib/data/yandex-music';
 
 import styles from './page.module.scss';
+import { TracksControls } from './tracks-controls';
 
 export const metadata: Metadata = {
     title: 'Tracks — Dormouse',
@@ -46,10 +47,6 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
     const q = pickParam(raw.q)?.trim() ?? '';
     const sortParam = pickParam(raw.sort);
     const sort: Sort = SORTS.includes(sortParam as Sort) ? (sortParam as Sort) : 'listens';
-    const explicitOnly = pickParam(raw.explicit) === '1';
-    const unavailableOnly = pickParam(raw.unavailable) === '1';
-    const chartedOnly = pickParam(raw.charted) === '1';
-
     const needle = q.toLowerCase();
     const matches = (track: TrackIndexEntry) =>
         !needle ||
@@ -57,13 +54,7 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
         track.artistNames.some((name) => name.toLowerCase().includes(needle)) ||
         (track.albumTitle?.toLowerCase().includes(needle) ?? false);
 
-    const filtered = index.filter(
-        (track) =>
-            matches(track) &&
-            (!explicitOnly || track.explicit) &&
-            (!unavailableOnly || !track.available) &&
-            (!chartedOnly || track.charted),
-    );
+    const filtered = index.filter((track) => matches(track));
 
     const collator = new Intl.Collator(locale);
     const sorted = [...filtered].sort((a, b) => {
@@ -84,9 +75,6 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
     const currentParams = {
         q: q || undefined,
         sort: sort === 'listens' ? undefined : sort,
-        explicit: explicitOnly ? '1' : undefined,
-        unavailable: unavailableOnly ? '1' : undefined,
-        charted: chartedOnly ? '1' : undefined,
     };
 
     return (
@@ -105,47 +93,18 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                 <p className={styles.count}>{t('found', { count: sorted.length })}</p>
             </div>
 
-            <form className={styles.filters}>
-                <input
-                    type="search"
-                    name="q"
-                    defaultValue={q}
-                    placeholder={t('searchPlaceholder')}
-                    className={styles.search}
-                />
-                <select name="sort" defaultValue={sort} className={styles.select}>
-                    {SORTS.map((option) => (
-                        <option key={option} value={option}>
-                            {t(`sort_${option}`)}
-                        </option>
-                    ))}
-                </select>
-                <label className={styles.toggle}>
-                    <input
-                        type="checkbox"
-                        name="explicit"
-                        value="1"
-                        defaultChecked={explicitOnly}
-                    />
-                    {t('filterExplicit')}
-                </label>
-                <label className={styles.toggle}>
-                    <input
-                        type="checkbox"
-                        name="unavailable"
-                        value="1"
-                        defaultChecked={unavailableOnly}
-                    />
-                    {t('filterUnavailable')}
-                </label>
-                <label className={styles.toggle}>
-                    <input type="checkbox" name="charted" value="1" defaultChecked={chartedOnly} />
-                    {t('filterCharted')}
-                </label>
-                <button type="submit" className={styles.apply}>
-                    {t('apply')}
-                </button>
-            </form>
+            <TracksControls
+                key={`${q}:${sort}`}
+                initialQuery={q}
+                initialSort={sort}
+                placeholder={t('searchPlaceholder')}
+                sortOptions={SORTS.map((option) => ({ value: option, label: t(`sort_${option}`) }))}
+                classNames={{
+                    container: styles.filters,
+                    search: styles.search,
+                    sort: styles.select,
+                }}
+            />
 
             {visible.length === 0 ? (
                 <p className={styles.empty}>{t('empty')}</p>
@@ -166,6 +125,7 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                                             width={64}
                                             height={64}
                                             className={styles.cardCover}
+                                            unoptimized
                                         />
                                     ) : (
                                         <div className={styles.cardCoverFallback} />
