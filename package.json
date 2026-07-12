@@ -1,6 +1,6 @@
 {
     "name": "dormouse-template",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "private": true,
     "scripts": {
         "prepare": "git config core.hooksPath .githooks || true",
