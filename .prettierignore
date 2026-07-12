@@ -4,4 +4,5 @@ build
 node_modules
 bun.lock
 raw
+data
 next-env.d.ts

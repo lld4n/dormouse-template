@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# Pre-push guard, active in every clone via `core.hooksPath .githooks`
+# (set by the `prepare` script in package.json when `bun install` runs).
+#
+# Two behaviors, depending on where the push is going:
+#
+# - To the template itself (lld4n/dormouse-template): every push to the
+#   default branch must raise `version` in package.json. If the pushed
+#   commits don't, the hook asks which kind of bump this is
+#   (major/minor/patch), creates the bump commit via
+#   scripts/bump-version.ts, and aborts the push — run `git push` again
+#   to include it. The bump is a separate commit and a separate push on
+#   purpose: pre-push runs after the pushed refs are already fixed, so a
+#   commit created here can never ride along in the same push.
+#
+# - To a repo generated from the template: never blocks, but warns when
+#   the push touches template-shipped files (anything outside raw/ and
+#   data/) — local edits to those can conflict with the weekly
+#   sync-template merge. Pure data pushes stay silent: raw/ and data/
+#   are instance-owned and the template never ships them.
+#
+# Skipped entirely in CI: main-pipeline and sync-template push from
+# workflows where nobody can answer a prompt, and their pushes are
+# exactly the instance-owned kind the warning is not about.
+
+set -euo pipefail
+
+[ -n "${CI:-}" ] && exit 0
+
+remote_url="${2:-}"
+zero=0000000000000000000000000000000000000000
+template_re='github\.com[:/]lld4n/dormouse-template(\.git)?/?$'
+
+# Extract "version" from package.json as it exists at a given commit.
+pkg_version() {
+    git show "$1:package.json" 2>/dev/null |
+        sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' |
+        head -n1
+}
+
+warned=false
+
+# stdin: one line per ref being pushed: <local ref> <local sha> <remote ref> <remote sha>
+while read -r _local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue                    # deleting a remote branch
+    [ "$remote_sha" = "$zero" ] && continue                   # brand-new remote branch, nothing to compare
+    git cat-file -e "$remote_sha" 2>/dev/null || continue     # remote tip unknown locally
+
+    if [[ "$remote_url" =~ $template_re ]]; then
+        # Template push: enforce a version bump on the default branch
+        # (master today; main also accepted to survive a future rename).
+        case "$remote_ref" in
+            refs/heads/master | refs/heads/main) ;;
+            *) continue ;;
+        esac
+        local_version=$(pkg_version "$local_sha")
+        remote_version=$(pkg_version "$remote_sha")
+        { [ -n "$local_version" ] && [ -n "$remote_version" ]; } || continue
+        [ "$local_version" != "$remote_version" ] && continue
+
+        echo "pre-push: a push to the template must bump package.json version (still $remote_version)." >&2
+        # Git feeds the ref list on stdin, so ask on the controlling
+        # terminal instead; without one (GUI clients), bail with a recipe.
+        if ! { printf 'Bump kind? [1] patch  [2] minor  [3] major: ' >/dev/tty; } 2>/dev/null; then
+            echo "pre-push: no terminal to ask on — run \`bun scripts/bump-version.ts <major|minor|patch>\` and push again." >&2
+            exit 1
+        fi
+        read -r choice </dev/tty || exit 1
+        case "$choice" in
+            1 | patch) kind=patch ;;
+            2 | minor) kind=minor ;;
+            3 | major) kind=major ;;
+            *)
+                echo "pre-push: unrecognized choice '$choice' — aborting push." >&2
+                exit 1
+                ;;
+        esac
+        bun scripts/bump-version.ts "$kind" >&2
+        echo "pre-push: version bump committed — run \`git push\` again to include it." >&2
+        exit 1
+    elif [ "$warned" = false ]; then
+        # Generated-repo push: warn (once) about template-shipped changes.
+        shipped=$(git diff --name-only "$remote_sha" "$local_sha" -- ':(exclude)raw' ':(exclude)data')
+        if [ -n "$shipped" ]; then
+            warned=true
+            {
+                echo
+                echo 'warning: this push changes files shipped by dormouse-template:'
+                printf '%s\n' "$shipped" | sed -n '1,10s/^/    /p'
+                [ "$(printf '%s\n' "$shipped" | wc -l)" -gt 10 ] && echo '    ...'
+                echo 'Local edits to template files can conflict with the weekly template'
+                echo 'sync (sync-template.yml). Nothing is blocked — just be ready to'
+                echo 'resolve the template-sync issue if one shows up.'
+                echo
+            } >&2
+        fi
+    fi
+done
+
+exit 0

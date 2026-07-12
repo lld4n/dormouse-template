@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Lints every commit message with commitlint (conventional commits — see
+# commitlint.config.mjs), so `git log` stays readable and it's clear what
+# each commit does. Active in every clone via `core.hooksPath .githooks`
+# (set by the `prepare` script in package.json when `bun install` runs).
+#
+# Skipped in CI: workflow-made commits (data syncs, template merges) are
+# not authored interactively and follow their own fixed messages.
+
+set -euo pipefail
+
+[ -n "${CI:-}" ] && exit 0
+
+bunx commitlint --edit "$1"
