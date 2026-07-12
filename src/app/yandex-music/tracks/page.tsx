@@ -1,0 +1,229 @@
+import type { Metadata } from 'next';
+import type { TrackIndexEntry } from '@/lib/data/yandex-music';
+import { getLocale, getTranslations } from 'next-intl/server';
+import Image from 'next/image';
+
+import Link from 'next/link';
+import { ButtonLink } from '@/components/ui/ButtonLink';
+import { coverUrl, getTracksIndex } from '@/lib/data/yandex-music';
+
+import styles from './page.module.scss';
+
+export const metadata: Metadata = {
+    title: 'Tracks — Dormouse',
+};
+
+const PER_PAGE = 48;
+const SORTS = ['listens', 'title', 'recent'] as const;
+type Sort = (typeof SORTS)[number];
+
+function pickParam(value: string | string[] | undefined): string | undefined {
+    return typeof value === 'string' ? value : undefined;
+}
+
+function buildQuery(params: Record<string, string | undefined>, page: number): string {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+        if (value) {
+            query.set(key, value);
+        }
+    }
+    if (page > 1) {
+        query.set('page', String(page));
+    }
+    const search = query.toString();
+    return search ? `?${search}` : '';
+}
+
+export default async function TracksPage({ searchParams }: PageProps<'/yandex-music/tracks'>) {
+    const raw = await searchParams;
+    const [t, locale, index] = await Promise.all([
+        getTranslations('tracks'),
+        getLocale(),
+        getTracksIndex(),
+    ]);
+
+    const q = pickParam(raw.q)?.trim() ?? '';
+    const sortParam = pickParam(raw.sort);
+    const sort: Sort = SORTS.includes(sortParam as Sort) ? (sortParam as Sort) : 'listens';
+    const explicitOnly = pickParam(raw.explicit) === '1';
+    const unavailableOnly = pickParam(raw.unavailable) === '1';
+    const chartedOnly = pickParam(raw.charted) === '1';
+
+    const needle = q.toLowerCase();
+    const matches = (track: TrackIndexEntry) =>
+        !needle ||
+        track.title.toLowerCase().includes(needle) ||
+        track.artistNames.some((name) => name.toLowerCase().includes(needle)) ||
+        (track.albumTitle?.toLowerCase().includes(needle) ?? false);
+
+    const filtered = index.filter(
+        (track) =>
+            matches(track) &&
+            (!explicitOnly || track.explicit) &&
+            (!unavailableOnly || !track.available) &&
+            (!chartedOnly || track.charted),
+    );
+
+    const collator = new Intl.Collator(locale);
+    const sorted = [...filtered].sort((a, b) => {
+        switch (sort) {
+            case 'title':
+                return collator.compare(a.title, b.title);
+            case 'recent':
+                return b.firstSeen - a.firstSeen;
+            default:
+                return b.listens - a.listens || collator.compare(a.title, b.title);
+        }
+    });
+
+    const pages = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
+    const page = Math.min(Math.max(1, Number(pickParam(raw.page)) || 1), pages);
+    const visible = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+    const currentParams = {
+        q: q || undefined,
+        sort: sort === 'listens' ? undefined : sort,
+        explicit: explicitOnly ? '1' : undefined,
+        unavailable: unavailableOnly ? '1' : undefined,
+        charted: chartedOnly ? '1' : undefined,
+    };
+
+    return (
+        <main className={styles.main}>
+            <header className={styles.topBar}>
+                <ButtonLink href="/" size="sm">
+                    dormouse
+                </ButtonLink>
+                <ButtonLink href="/settings" size="sm">
+                    {t('settingsLink')}
+                </ButtonLink>
+            </header>
+
+            <div className={styles.heading}>
+                <h1 className={styles.title}>{t('title')}</h1>
+                <p className={styles.count}>{t('found', { count: sorted.length })}</p>
+            </div>
+
+            <form className={styles.filters}>
+                <input
+                    type="search"
+                    name="q"
+                    defaultValue={q}
+                    placeholder={t('searchPlaceholder')}
+                    className={styles.search}
+                />
+                <select name="sort" defaultValue={sort} className={styles.select}>
+                    {SORTS.map((option) => (
+                        <option key={option} value={option}>
+                            {t(`sort_${option}`)}
+                        </option>
+                    ))}
+                </select>
+                <label className={styles.toggle}>
+                    <input
+                        type="checkbox"
+                        name="explicit"
+                        value="1"
+                        defaultChecked={explicitOnly}
+                    />
+                    {t('filterExplicit')}
+                </label>
+                <label className={styles.toggle}>
+                    <input
+                        type="checkbox"
+                        name="unavailable"
+                        value="1"
+                        defaultChecked={unavailableOnly}
+                    />
+                    {t('filterUnavailable')}
+                </label>
+                <label className={styles.toggle}>
+                    <input type="checkbox" name="charted" value="1" defaultChecked={chartedOnly} />
+                    {t('filterCharted')}
+                </label>
+                <button type="submit" className={styles.apply}>
+                    {t('apply')}
+                </button>
+            </form>
+
+            {visible.length === 0 ? (
+                <p className={styles.empty}>{t('empty')}</p>
+            ) : (
+                <ul className={styles.grid}>
+                    {visible.map((track) => {
+                        const cover = coverUrl(track.cover, 200);
+                        return (
+                            <li key={track.id}>
+                                <Link
+                                    href={`/yandex-music/tracks/${track.id}`}
+                                    className={styles.card}
+                                >
+                                    {cover ? (
+                                        <Image
+                                            src={cover}
+                                            alt=""
+                                            width={64}
+                                            height={64}
+                                            className={styles.cardCover}
+                                        />
+                                    ) : (
+                                        <div className={styles.cardCoverFallback} />
+                                    )}
+                                    <span className={styles.cardText}>
+                                        <span className={styles.cardTitle}>
+                                            {track.title}
+                                            {track.version ? (
+                                                <span className={styles.cardVersion}>
+                                                    {' '}
+                                                    {track.version}
+                                                </span>
+                                            ) : null}
+                                        </span>
+                                        <span className={styles.cardArtists}>
+                                            {track.artistNames.join(', ')}
+                                        </span>
+                                        {track.albumTitle ? (
+                                            <span className={styles.cardAlbum}>
+                                                {track.albumTitle}
+                                            </span>
+                                        ) : null}
+                                    </span>
+                                    {track.listens > 0 ? (
+                                        <span className={styles.cardListens}>×{track.listens}</span>
+                                    ) : null}
+                                </Link>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+
+            {pages > 1 ? (
+                <nav className={styles.pagination} aria-label={t('pagination')}>
+                    {page > 1 ? (
+                        <ButtonLink
+                            href={`/yandex-music/tracks${buildQuery(currentParams, page - 1)}`}
+                            size="sm"
+                        >
+                            ← {t('prev')}
+                        </ButtonLink>
+                    ) : (
+                        <span />
+                    )}
+                    <span className={styles.pageInfo}>{t('page', { page, pages })}</span>
+                    {page < pages ? (
+                        <ButtonLink
+                            href={`/yandex-music/tracks${buildQuery(currentParams, page + 1)}`}
+                            size="sm"
+                        >
+                            {t('next')} →
+                        </ButtonLink>
+                    ) : (
+                        <span />
+                    )}
+                </nav>
+            ) : null}
+        </main>
+    );
+}

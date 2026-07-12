@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import type { TrackSnapshot } from '@/lib/data/yandex-music';
 import { getLocale, getTranslations } from 'next-intl/server';
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { notFound } from 'next/navigation';
+import { CoverLightbox } from '@/components/CoverLightbox';
 import { ButtonLink } from '@/components/ui/ButtonLink';
 import {
     coverUrl,
@@ -107,9 +107,14 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
     return (
         <main className={styles.main}>
             <header className={styles.topBar}>
-                <ButtonLink href="/" size="sm">
-                    dormouse
-                </ButtonLink>
+                <div className={styles.topBarGroup}>
+                    <ButtonLink href="/" size="sm">
+                        dormouse
+                    </ButtonLink>
+                    <ButtonLink href="/yandex-music/tracks" size="sm">
+                        {t('allTracks')}
+                    </ButtonLink>
+                </div>
                 <ButtonLink href="/settings" size="sm">
                     {t('settingsLink')}
                 </ButtonLink>
@@ -117,13 +122,12 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
 
             <section className={styles.hero}>
                 {cover ? (
-                    <Image
-                        src={cover}
-                        alt=""
-                        width={232}
-                        height={232}
-                        className={styles.cover}
-                        priority
+                    <CoverLightbox
+                        thumbSrc={cover}
+                        fullSrc={coverUrl(track.cover, 1000) ?? cover}
+                        alt={track.title}
+                        thumbSize={280}
+                        thumbClassName={styles.cover}
                     />
                 ) : (
                     <div className={styles.coverFallback} />
@@ -235,27 +239,35 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
                                 ) : null}
                             </div>
 
+                            {/* rtl + newest-first DOM keeps the visual order chronological
+                                while the initial scroll position lands on the newest month */}
                             <div className={styles.bars}>
-                                {stats.byMonth.map(({ month, count }) => (
-                                    <div
-                                        key={month}
-                                        className={styles.barColumn}
-                                        title={`${month}: ${count}`}
-                                    >
-                                        <div className={styles.barTrack}>
-                                            <div
-                                                className={styles.bar}
-                                                style={{
-                                                    height: `${(count / maxMonthCount) * 100}%`,
-                                                }}
-                                            />
+                                {[...stats.byMonth].reverse().map(({ month, count }) => {
+                                    const [year, monthNumber] = month.split('-');
+                                    const withYear =
+                                        monthNumber === '01' || month === stats.byMonth[0]!.month;
+                                    return (
+                                        <div
+                                            key={month}
+                                            className={styles.barColumn}
+                                            title={`${month}: ${count}`}
+                                        >
+                                            <div className={styles.barTrack}>
+                                                <div
+                                                    className={styles.bar}
+                                                    style={{
+                                                        height: `${(count / maxMonthCount) * 100}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                            <span className={styles.barLabel}>
+                                                {formatMonth(month, locale)}
+                                                {withYear ? ` ’${year!.slice(2)}` : ''}
+                                            </span>
+                                            <span className={styles.barCount}>{count}</span>
                                         </div>
-                                        <span className={styles.barLabel}>
-                                            {formatMonth(month, locale)}
-                                        </span>
-                                        <span className={styles.barCount}>{count}</span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             <div className={styles.contexts}>
@@ -300,7 +312,7 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
                                 </div>
                             ) : null}
                         </div>
-                        <ChartSparkline snapshots={chartSnapshots} />
+                        <ChartSparkline snapshots={chartSnapshots} locale={locale} />
                         {chartSnapshots.length >= 2 ? (
                             <div className={styles.sparklineDates}>
                                 <span>{formatDate(chartSnapshots[0]!.snapshotDate, locale)}</span>
@@ -317,7 +329,7 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
                 <h2 className={styles.sectionTitle}>{t('metadataHistory')}</h2>
                 <div className={styles.card}>
                     <p className={styles.muted}>
-                        {t('archivedSince', {
+                        {t('appearedIn', {
                             date: formatDate(record.snapshots[0]!.snapshotDate, locale),
                         })}
                     </p>

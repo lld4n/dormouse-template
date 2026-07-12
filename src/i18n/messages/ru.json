@@ -19,8 +19,34 @@
         "accent": "акцентный цвет",
         "language": "язык"
     },
+    "tracks": {
+        "settingsLink": "настройки",
+        "title": "треки",
+        "found": "{count, plural, one {# трек} few {# трека} many {# треков} other {# трека}}",
+        "searchPlaceholder": "поиск по названию, артисту или альбому…",
+        "sort_listens": "самые прослушиваемые",
+        "sort_title": "по названию",
+        "sort_recent": "недавно добавленные",
+        "filterExplicit": "explicit",
+        "filterUnavailable": "недоступные",
+        "filterCharted": "чартившиеся",
+        "apply": "применить",
+        "empty": "ничего не нашлось",
+        "pagination": "Пагинация",
+        "page": "стр. {page} / {pages}",
+        "prev": "назад",
+        "next": "вперёд"
+    },
+    "lightbox": {
+        "open": "Открыть обложку на весь экран",
+        "close": "Закрыть",
+        "zoomIn": "Приблизить",
+        "zoomOut": "Отдалить",
+        "reset": "Сбросить масштаб"
+    },
     "track": {
         "settingsLink": "настройки",
+        "allTracks": "треки",
         "explicit": "explicit",
         "foreignAgent": "иноагент",
         "unavailable": "недоступен в Яндексе",
@@ -44,7 +70,7 @@
         "chartLast": "на {date}",
         "chartListeners": "слушателей",
         "metadataHistory": "история метаданных",
-        "archivedSince": "в архиве с {date}"
+        "appearedIn": "эти данные появились в dormouse {date}"
     },
     "localeSwitcher": {
         "label": "Язык"

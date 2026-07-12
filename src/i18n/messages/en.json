@@ -19,8 +19,34 @@
         "accent": "accent color",
         "language": "language"
     },
+    "tracks": {
+        "settingsLink": "settings",
+        "title": "tracks",
+        "found": "{count, plural, one {# track} other {# tracks}}",
+        "searchPlaceholder": "search by title, artist or album…",
+        "sort_listens": "most listened",
+        "sort_title": "by title",
+        "sort_recent": "recently added",
+        "filterExplicit": "explicit",
+        "filterUnavailable": "unavailable",
+        "filterCharted": "charted",
+        "apply": "apply",
+        "empty": "nothing found",
+        "pagination": "Pagination",
+        "page": "page {page} / {pages}",
+        "prev": "prev",
+        "next": "next"
+    },
+    "lightbox": {
+        "open": "Open cover fullscreen",
+        "close": "Close",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "reset": "Reset zoom"
+    },
     "track": {
         "settingsLink": "settings",
+        "allTracks": "tracks",
         "explicit": "explicit",
         "foreignAgent": "foreign agent",
         "unavailable": "unavailable on Yandex",
@@ -44,7 +70,7 @@
         "chartLast": "on {date}",
         "chartListeners": "listeners",
         "metadataHistory": "metadata history",
-        "archivedSince": "in the archive since {date}"
+        "appearedIn": "this data first appeared in dormouse on {date}"
     },
     "localeSwitcher": {
         "label": "Language"

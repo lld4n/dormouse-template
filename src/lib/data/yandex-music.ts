@@ -143,3 +143,112 @@ export function coverUrl(cover: string, size: number): string | null {
     }
     return `https://${cover.replace('%%', `${size}x${size}`)}`;
 }
+
+export interface TrackIndexEntry {
+    id: string;
+    title: string;
+    version?: string;
+    artistNames: string[];
+    albumTitle?: string;
+    cover: string;
+    explicit: boolean;
+    available: boolean;
+    charted: boolean;
+    listens: number;
+    lastListen: number | null;
+    /** Epoch ms the track first appeared in dormouse (first snapshot). */
+    firstSeen: number;
+}
+
+async function listEntityIds(directory: string): Promise<string[]> {
+    try {
+        const entries = await fs.readdir(path.join(DATA_ROOT, directory));
+        return entries
+            .filter((name) => name.endsWith('.json'))
+            .map((name) => name.slice(0, -'.json'.length));
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return [];
+        }
+        throw error;
+    }
+}
+
+async function readAllEntities<T>(directory: string): Promise<Map<string, T>> {
+    const ids = await listEntityIds(directory);
+    const entries = await Promise.all(
+        ids.map(async (id) => [id, await readJson<T>(directory, `${id}.json`)] as const),
+    );
+    const map = new Map<string, T>();
+    for (const [id, entity] of entries) {
+        if (entity !== null) {
+            map.set(id, entity);
+        }
+    }
+    return map;
+}
+
+async function buildTracksIndex(): Promise<TrackIndexEntry[]> {
+    const [tracks, artists, albums, chartedIds, months] = await Promise.all([
+        readAllEntities<Track>('tracks'),
+        readAllEntities<Artist>('artists'),
+        readAllEntities<Album>('albums'),
+        listEntityIds('charts'),
+        listHistoryMonths(),
+    ]);
+
+    const listens = new Map<string, { count: number; lastAt: number }>();
+    for (const month of months) {
+        const items = (await readJson<HistoryItem[]>('history', `${month}.json`)) ?? [];
+        for (const item of items) {
+            for (const id of item.tracks) {
+                const entry = listens.get(id) ?? { count: 0, lastAt: 0 };
+                entry.count += 1;
+                entry.lastAt = Math.max(entry.lastAt, item.date);
+                listens.set(id, entry);
+            }
+        }
+    }
+
+    const charted = new Set(chartedIds);
+    const index: TrackIndexEntry[] = [];
+    for (const [id, record] of tracks) {
+        const snapshot = record.snapshots.at(-1);
+        const firstSnapshot = record.snapshots[0];
+        if (!snapshot || !firstSnapshot) {
+            continue;
+        }
+        const played = listens.get(id);
+        index.push({
+            id,
+            title: snapshot.title,
+            version: snapshot.version,
+            artistNames: snapshot.artists.map(
+                (artistId) => artists.get(artistId)?.snapshots.at(-1)?.name ?? `#${artistId}`,
+            ),
+            albumTitle: snapshot.albums[0]
+                ? albums.get(snapshot.albums[0])?.snapshots.at(-1)?.title
+                : undefined,
+            cover: snapshot.cover,
+            explicit: snapshot.explicit,
+            available: snapshot.available,
+            charted: charted.has(id),
+            listens: played?.count ?? 0,
+            lastListen: played?.lastAt ?? null,
+            firstSeen: firstSnapshot.snapshotDate,
+        });
+    }
+    return index;
+}
+
+// Module-level, not React cache(): the index scans every entity file, and the
+// data on disk only changes with a deploy — one build per server instance.
+let tracksIndexPromise: Promise<TrackIndexEntry[]> | null = null;
+
+export function getTracksIndex(): Promise<TrackIndexEntry[]> {
+    tracksIndexPromise ??= buildTracksIndex().catch((error: unknown) => {
+        tracksIndexPromise = null;
+        throw error;
+    });
+    return tracksIndexPromise;
+}
