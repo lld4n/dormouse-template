@@ -37,6 +37,7 @@ export function CoverImage({
             <span
                 className={`${styles.placeholder} ${className ?? ''}`}
                 aria-label={alt || undefined}
+                style={{ width: size, height: size }}
             >
                 {initials(title)}
             </span>
@@ -50,6 +51,7 @@ export function CoverImage({
             width={size}
             height={size}
             className={className}
+            style={{ width: size, height: size }}
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : 'auto'}
             decoding="async"

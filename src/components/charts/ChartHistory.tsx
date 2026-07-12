@@ -41,7 +41,10 @@ export function ChartHistory({ snapshots, locale, listenersLabel }: ChartHistory
                             fontFamily: 'var(--font-mono)',
                             fontSize: 12,
                         }}
-                        labelFormatter={(value) => formatter.format(Number(value))}
+                        labelFormatter={(_label, payload) => {
+                            const date = payload[0]?.payload?.date;
+                            return typeof date === 'number' ? formatter.format(date) : '';
+                        }}
                         formatter={(value, name) => [
                             name === 'position'
                                 ? `#${value}`
