@@ -103,8 +103,8 @@ jobs:
                      git merge-base --is-ancestor "origin/$BRANCH" "origin/$default_branch"; then
                     gh issue close "$number" --comment "Resolved — \`$BRANCH\` is merged into \`$default_branch\`. Resuming automatic syncing."
 
-                    git config user.name "dormouse"
-                    git config user.email "dormouse@mail.com"
+                    git config user.name "${{ github.repository_owner }}"
+                    git config user.email "${{ github.repository_owner }}@users.noreply.github.com"
                     bun run scripts/sync-status.ts clean --template-url="$TEMPLATE_URL"
                     git add data/extra/template-sync-status.json
                     git commit -m "chore: template sync status is clean"
@@ -119,8 +119,8 @@ jobs:
               if: steps.existing.outputs.open == 'false'
               id: merge
               run: |
-                  git config user.name "dormouse"
-                  git config user.email "dormouse@mail.com"
+                  git config user.name "${{ github.repository_owner }}"
+                  git config user.email "${{ github.repository_owner }}@users.noreply.github.com"
 
                   upstream_branch=$(git ls-remote --symref "$TEMPLATE_URL" HEAD | awk '/^ref:/ { sub("refs/heads/", "", $2); print $2 }')
                   git remote add template "$TEMPLATE_URL"
