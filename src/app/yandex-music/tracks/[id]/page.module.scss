@@ -27,6 +27,9 @@
 
 .cover {
     flex-shrink: 0;
+    width: 280px;
+    height: 280px;
+    object-fit: cover;
     background: var(--bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
