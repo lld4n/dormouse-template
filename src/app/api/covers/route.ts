@@ -10,7 +10,13 @@ export async function GET(request: Request) {
         return new Response(null, { status: 400 });
     }
 
-    const upstream = await fetch(source, { next: { revalidate: 60 * 60 * 24 * 7 } });
+    let upstream = await fetch(source, { next: { revalidate: 60 * 60 * 24 * 7 } });
+    // Some Yandex cover records only serve their 200px rendition. A missing
+    // larger size must not turn a valid cover into a UI fallback.
+    if (!upstream.ok && size !== 200) {
+        const fallback = resolveYandexCover(searchParams.get('cover') ?? '', 200)!;
+        upstream = await fetch(fallback, { next: { revalidate: 60 * 60 * 24 * 7 } });
+    }
     if (!upstream.ok || !upstream.body) {
         return new Response(null, { status: 404 });
     }

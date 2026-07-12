@@ -38,6 +38,8 @@ export function CoverLightbox({ cover, title, thumbSize, thumbClassName }: Cover
                     close={() => setOpen(false)}
                     slides={[{ src: full, alt: title }]}
                     plugins={[Zoom]}
+                    carousel={{ finite: true, preload: 0 }}
+                    render={{ buttonPrev: () => null, buttonNext: () => null }}
                     zoom={{ maxZoomPixelRatio: 6, scrollToZoom: true }}
                 />
             ) : null}
