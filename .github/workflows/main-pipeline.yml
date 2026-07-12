@@ -63,7 +63,12 @@ jobs:
               run: |
                   git config user.name "dormouse"
                   git config user.email "dormouse@mail.com"
-                  git add raw data
+                  # `git add` on a missing path is fatal, and a fresh repo with
+                  # no connector secrets yet has neither raw/ nor data/ — the
+                  # pipeline only creates them once a token is configured.
+                  for dir in raw data; do
+                    if [ -d "$dir" ]; then git add "$dir"; fi
+                  done
                   if git diff --cached --quiet; then
                     echo "No data changes to commit."
                   else
