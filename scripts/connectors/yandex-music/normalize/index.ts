@@ -7,26 +7,29 @@ import { AlbumStore, collectAlbums } from './albums.ts';
 import { ArtistStore, collectArtists } from './artists.ts';
 import { ChartStore } from './charts.ts';
 import { buildHistory, mergeHistory } from './history.ts';
+import { writeTrackIndex } from './track-index.ts';
 import { TrackStore } from './tracks.ts';
 
 const log = logger.child('yandex-music');
 
 const RAW_DIR = 'raw/yandex-music';
 /**
- * Incremental-processing cursor: `{ lastProcessed: <epoch ms of newest raw
- * snapshot already normalized> }`. This is what makes `normalizeYandexMusic`
+ * Incremental-processing cursor: `{ lastProcessed: <newest raw snapshot
+ * filename already normalized> }`. Raw snapshot filenames are ISO dates, so
+ * their lexical order is also their chronological order. This makes
+ * `normalizeYandexMusic`
  * idempotent and cheap to rerun on a schedule — without it, every run
  * would reprocess the entire `raw/` history from scratch.
  */
 const META_FILE = 'data/yandex-music/meta.json';
 
-/** Reads the incremental cursor from `META_FILE`; `0` (process everything) if it doesn't exist yet, i.e. first run. */
-async function readLastProcessed(): Promise<number> {
+/** Reads the incremental cursor; no cursor means process every raw snapshot. */
+async function readLastProcessed(): Promise<string | null> {
     const file = Bun.file(META_FILE);
     if (!(await file.exists())) {
-        return 0;
+        return null;
     }
-    const meta: { lastProcessed: number } = await file.json();
+    const meta: { lastProcessed: string } = await file.json();
     return meta.lastProcessed;
 }
 
@@ -43,7 +46,7 @@ async function readLastProcessed(): Promise<number> {
  * (no snapshots have ever been fetched yet) rather than letting `readdir`
  * throw `ENOENT`.
  */
-async function listRawSnapshots(): Promise<{ name: string; ts: number }[]> {
+async function listRawSnapshots(): Promise<string[]> {
     let entries: string[];
     try {
         entries = await readdir(RAW_DIR);
@@ -54,19 +57,15 @@ async function listRawSnapshots(): Promise<{ name: string; ts: number }[]> {
         throw error;
     }
 
-    return entries
-        .filter((f) => f.endsWith('.json'))
-        .map((f) => ({ name: f, ts: new Date(f.replace('.json', '')).getTime() }))
-        .sort((a, b) => a.ts - b.ts);
+    return entries.filter((f) => f.endsWith('.json')).sort();
 }
 
 /**
  * `Connector.normalize` implementation for Yandex Music (see `types.ts`).
  * Orchestrates the raw -> normalized transform:
  *
- * 1. Reads the `lastProcessed` cursor and lists `raw/yandex-music/*.json`
- *    snapshot files newer than it (filename, minus extension, is parsed
- *    as a date — see `saveSnapshot`'s `<YYYY-MM-DD>.json` naming).
+ * 1. Reads the `lastProcessed` filename cursor and lists newer
+ *    `raw/yandex-music/*.json` snapshots in lexical/chronological order.
  * 2. Replays those files in chronological order through one
  *    `AlbumStore`/`ArtistStore`/`TrackStore`/`ChartStore`/history batch
  *    shared across the whole run, so entities seen in multiple snapshots
@@ -85,7 +84,7 @@ export async function normalizeYandexMusic(): Promise<void> {
     const lastProcessed = await readLastProcessed();
 
     const allFiles = await listRawSnapshots();
-    const newFiles = allFiles.filter(({ ts }) => ts > lastProcessed);
+    const newFiles = allFiles.filter((name) => lastProcessed === null || name > lastProcessed);
 
     if (newFiles.length === 0) {
         log.info('Nothing new to normalize.');
@@ -104,7 +103,8 @@ export async function normalizeYandexMusic(): Promise<void> {
     // later file's items for the same date replace an earlier file's.
     const historyByDate = new Map<number, HistoryItem[]>();
 
-    for (const { name, ts } of newFiles) {
+    for (const name of newFiles) {
+        const ts = new Date(name.replace('.json', '')).getTime();
         const raw: RawHistoryResponse = await Bun.file(`${RAW_DIR}/${name}`).json();
 
         // `ts` (this snapshot file's timestamp) is used as the
@@ -151,11 +151,12 @@ export async function normalizeYandexMusic(): Promise<void> {
         charts.save(),
         mergeHistory(allNewHistoryItems),
     ]);
+    const indexedTracks = await writeTrackIndex(newFiles.at(-1)!);
 
     // Cursor advance is intentionally last: if anything above throws, this
     // line never runs and the next invocation safely reprocesses the same
     // files (see the crash-safety note on `normalizeYandexMusic` above).
-    await Bun.write(META_FILE, `${JSON.stringify({ lastProcessed: newFiles.at(-1)!.ts })}\n`);
+    await Bun.write(META_FILE, `${JSON.stringify({ lastProcessed: newFiles.at(-1) })}\n`);
 
     log.notice('Processed snapshot(s)', {
         snapshots: newFiles.length,
@@ -163,5 +164,6 @@ export async function normalizeYandexMusic(): Promise<void> {
         albums: albums.stats.total,
         tracks: tracks.stats.total,
         historySessions: allNewHistoryItems.length,
+        indexedTracks,
     });
 }

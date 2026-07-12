@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
-import type { TrackIndexEntry } from '@/lib/data/yandex-music';
+import type { TrackIndexEntry } from '@/lib/data/yandex-music-track-index';
 import { getLocale, getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 
 import Link from 'next/link';
 import { ButtonLink } from '@/components/ui/ButtonLink';
-import { coverUrl, getTracksIndex } from '@/lib/data/yandex-music';
+import { coverUrl } from '@/lib/data/yandex-music';
+import { getTracksIndex } from '@/lib/data/yandex-music-track-index';
 
 import styles from './page.module.scss';
 import { TracksControls } from './tracks-controls';
@@ -47,12 +48,8 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
     const q = pickParam(raw.q)?.trim() ?? '';
     const sortParam = pickParam(raw.sort);
     const sort: Sort = SORTS.includes(sortParam as Sort) ? (sortParam as Sort) : 'listens';
-    const needle = q.toLowerCase();
-    const matches = (track: TrackIndexEntry) =>
-        !needle ||
-        track.title.toLowerCase().includes(needle) ||
-        track.artistNames.some((name) => name.toLowerCase().includes(needle)) ||
-        (track.albumTitle?.toLowerCase().includes(needle) ?? false);
+    const needle = q.toLocaleLowerCase();
+    const matches = (track: TrackIndexEntry) => !needle || track.search.includes(needle);
 
     const filtered = index.filter((track) => matches(track));
 
@@ -141,11 +138,11 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                                             ) : null}
                                         </span>
                                         <span className={styles.cardArtists}>
-                                            {track.artistNames.join(', ')}
+                                            {track.artists.map(({ name }) => name).join(', ')}
                                         </span>
-                                        {track.albumTitle ? (
+                                        {track.albums[0] ? (
                                             <span className={styles.cardAlbum}>
-                                                {track.albumTitle}
+                                                {track.albums[0].title}
                                             </span>
                                         ) : null}
                                     </span>

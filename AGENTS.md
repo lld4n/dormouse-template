@@ -11,4 +11,4 @@ Terminal minimalism, reference: npmx.dev (open source, Nuxt — take the aesthet
 
 ## Derived data for rendering
 
-Do not make request-time pages scan large collections of entity JSON files. When a view needs aggregate or searchable data, it may be precomputed by connector normalization into a compact, versioned derived file. Every such optimization must document why it is needed and include a migration path: existing generated repositories must build the new file from their archived data, while new repositories must create it from their first normalization run. Agree the migration and rollout sequence before changing a normalized-data format.
+Do not make request-time pages scan large collections of entity JSON files. When a view needs aggregate or searchable data, it may be precomputed by connector normalization into a compact, versioned derived file. Every such optimization must document why it is needed. If the change needs a migration, agree its rollout before changing a normalized-data format; otherwise, explicitly record why a clean rebuild from `raw/` is sufficient.

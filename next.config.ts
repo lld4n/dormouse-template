@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     // in production. Scoped per route: the 250 MB serverless limit is
     // per-function, so never use a blanket '/*'.
     outputFileTracingIncludes: {
-        '/yandex-music/tracks': ['data/yandex-music/**'],
+        '/yandex-music/tracks': ['data/yandex-music/index/tracks.json'],
         '/yandex-music/tracks/[id]': ['data/yandex-music/**'],
     },
 };
