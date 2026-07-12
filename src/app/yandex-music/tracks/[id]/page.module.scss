@@ -1,0 +1,257 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+    max-width: 760px;
+    padding: 24px 24px 64px;
+    margin: 0 auto;
+}
+
+.topBar {
+    display: flex;
+    justify-content: space-between;
+}
+
+.hero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.cover {
+    flex-shrink: 0;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+}
+
+.coverFallback {
+    flex-shrink: 0;
+    width: 232px;
+    height: 232px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+}
+
+.info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 260px;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.version {
+    font-weight: 400;
+    color: var(--fg-subtle);
+}
+
+.artists {
+    font-size: 18px;
+    color: var(--fg-muted);
+}
+
+.meta {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--fg-subtle);
+}
+
+.entityLink {
+    text-decoration-line: underline;
+    text-decoration-color: color-mix(in srgb, var(--fg) 25%, transparent);
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+
+    &:hover {
+        color: var(--accent);
+    }
+}
+
+.badges,
+.contexts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.badge {
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    background: var(--bg-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+}
+
+.badgeAlert {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.canonical {
+    font-size: 14px;
+    color: var(--fg-muted);
+}
+
+.external {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--fg-subtle);
+
+    &:hover {
+        color: var(--accent);
+    }
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sectionTitle {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.muted {
+    font-size: 14px;
+    color: var(--fg-subtle);
+}
+
+.statsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statValue {
+    font-family: var(--font-mono);
+    font-size: 20px;
+}
+
+.statLabel {
+    font-size: 12px;
+    color: var(--fg-subtle);
+}
+
+.bars {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.barColumn {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    min-width: 0;
+}
+
+.barTrack {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    max-width: 48px;
+    height: 96px;
+}
+
+.bar {
+    width: 100%;
+    min-height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+}
+
+.barLabel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-subtle);
+}
+
+.barCount {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+}
+
+.sparkline {
+    width: 100%;
+    height: 80px;
+}
+
+.sparklineDates {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-subtle);
+}
+
+.changes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    list-style: none;
+}
+
+.change {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.changeDate {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+}
+
+.change ul {
+    list-style: none;
+}
+
+.changeItem {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-subtle);
+    overflow-wrap: anywhere;
+}
+
+@media (width <= 560px) {
+    .hero {
+        flex-direction: column;
+    }
+}

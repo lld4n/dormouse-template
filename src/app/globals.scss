@@ -64,7 +64,9 @@
     }
 }
 
-@each $name in sky, coral, amber, emerald, violet, magenta, neutral {
+// Quoted on purpose: bare coral/violet/magenta are Sass color literals and
+// magenta would be emitted as "fuchsia", silently breaking the selector.
+@each $name in 'sky', 'coral', 'amber', 'emerald', 'violet', 'magenta', 'neutral' {
     :root[data-accent='#{$name}'] {
         --accent: var(--swatch-#{$name});
     }

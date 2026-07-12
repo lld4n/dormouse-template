@@ -19,6 +19,33 @@
         "accent": "акцентный цвет",
         "language": "язык"
     },
+    "track": {
+        "settingsLink": "настройки",
+        "explicit": "explicit",
+        "foreignAgent": "иноагент",
+        "unavailable": "недоступен в Яндексе",
+        "lyrics": "текст",
+        "syncLyrics": "синхронный текст",
+        "canonical": "склеен с каноническим треком — открыть",
+        "openInYandex": "открыть в Яндекс Музыке",
+        "listens": "мои прослушивания",
+        "notListened": "ни разу не слушался — в архиве из-за чартов или метаданных",
+        "totalListens": "{count, plural, one {прослушивание} few {прослушивания} many {прослушиваний} other {прослушивания}}",
+        "firstListen": "первое прослушивание",
+        "lastListen": "последнее прослушивание",
+        "context_wave": "волна",
+        "context_album": "альбом",
+        "context_artist": "артист",
+        "context_playlist": "плейлист",
+        "context_search": "поиск",
+        "context_other": "другое",
+        "chart": "чарт",
+        "chartPeak": "пиковая позиция",
+        "chartLast": "на {date}",
+        "chartListeners": "слушателей",
+        "metadataHistory": "история метаданных",
+        "archivedSince": "в архиве с {date}"
+    },
     "localeSwitcher": {
         "label": "Язык"
     }

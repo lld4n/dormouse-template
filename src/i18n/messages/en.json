@@ -19,6 +19,33 @@
         "accent": "accent color",
         "language": "language"
     },
+    "track": {
+        "settingsLink": "settings",
+        "explicit": "explicit",
+        "foreignAgent": "foreign agent",
+        "unavailable": "unavailable on Yandex",
+        "lyrics": "lyrics",
+        "syncLyrics": "synced lyrics",
+        "canonical": "merged into a canonical track — open it",
+        "openInYandex": "open in Yandex Music",
+        "listens": "my listens",
+        "notListened": "never listened — archived via charts or related metadata",
+        "totalListens": "{count, plural, one {listen} other {listens}}",
+        "firstListen": "first listen",
+        "lastListen": "last listen",
+        "context_wave": "wave",
+        "context_album": "album",
+        "context_artist": "artist",
+        "context_playlist": "playlist",
+        "context_search": "search",
+        "context_other": "other",
+        "chart": "chart",
+        "chartPeak": "peak position",
+        "chartLast": "on {date}",
+        "chartListeners": "listeners",
+        "metadataHistory": "metadata history",
+        "archivedSince": "in the archive since {date}"
+    },
     "localeSwitcher": {
         "label": "Language"
     }
