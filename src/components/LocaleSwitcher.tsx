@@ -17,7 +17,7 @@ export async function LocaleSwitcher() {
                     size="sm"
                     type="submit"
                     formAction={setLocale.bind(null, candidate)}
-                    disabled={candidate === locale}
+                    aria-pressed={candidate === locale}
                 >
                     {candidate}
                 </Button>

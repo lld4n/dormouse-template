@@ -1,39 +1,72 @@
-/* Design tokens — minimal oklch palette (light + dark) */
-:root {
+/* Design tokens — minimal oklch palette (light + dark, user-selectable accent) */
+
+@mixin light-tokens {
+    color-scheme: light;
+
     --bg: oklch(100% 0 0deg);
-    --bg-subtle: oklch(97.9% 0.1% 286.375deg);
-    --bg-muted: oklch(95.5% 0.1% 286.76deg);
-    --bg-elevated: oklch(94% 0.2% 287.29deg);
+    --bg-subtle: oklch(97.9% 0.001 286.375deg);
+    --bg-muted: oklch(95.5% 0.001 286.76deg);
+    --bg-elevated: oklch(94% 0.002 287.29deg);
     --fg: oklch(14.6% 0 0deg);
     --fg-muted: oklch(39.8% 0 0deg);
     --fg-subtle: oklch(48% 0 0deg);
     --border: oklch(85.14% 0 0deg);
     --border-subtle: oklch(92.2% 0 0deg);
     --border-hover: oklch(71.5% 0 0deg);
-    --accent: oklch(50% 16% 247.27deg);
+    --swatch-sky: oklch(50% 0.16 247.27deg);
+    --swatch-coral: oklch(56% 0.17 10.75deg);
+    --swatch-amber: oklch(58% 0.18 46.34deg);
+    --swatch-emerald: oklch(51% 0.13 162.4deg);
+    --swatch-violet: oklch(56% 0.13 282.067deg);
+    --swatch-magenta: oklch(56% 0.14 325deg);
+    --swatch-neutral: oklch(14.5% 0 0deg);
+}
+
+@mixin dark-tokens {
+    color-scheme: dark;
+
+    --bg: oklch(17.1% 0 0deg);
+    --bg-subtle: oklch(19.8% 0 0deg);
+    --bg-muted: oklch(23.6% 0 0deg);
+    --bg-elevated: oklch(26.6% 0 0deg);
+    --fg: oklch(98.2% 0 0deg);
+    --fg-muted: oklch(74.9% 0 0deg);
+    --fg-subtle: oklch(67.3% 0 0deg);
+    --border: oklch(26.9% 0 0deg);
+    --border-subtle: oklch(23.9% 0 0deg);
+    --border-hover: oklch(37.1% 0 0deg);
+    --swatch-sky: oklch(78.7% 0.128 230.318deg);
+    --swatch-coral: oklch(70.4% 0.177 14.75deg);
+    --swatch-amber: oklch(82.8% 0.165 84.429deg);
+    --swatch-emerald: oklch(79.2% 0.153 166.95deg);
+    --swatch-violet: oklch(78% 0.148 286.067deg);
+    --swatch-magenta: oklch(78% 0.15 330deg);
+    --swatch-neutral: oklch(100% 0 0deg);
+}
+
+:root {
+    @include light-tokens;
+
+    --accent: var(--swatch-sky);
     --radius: 6px;
     --radius-lg: 8px;
     --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
     --font-mono: var(--font-geist-mono), ui-monospace, sfmono-regular, menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: oklch(17.1% 0 0deg);
-        --bg-subtle: oklch(19.8% 0 0deg);
-        --bg-muted: oklch(23.6% 0 0deg);
-        --bg-elevated: oklch(26.6% 0 0deg);
-        --fg: oklch(98.2% 0 0deg);
-        --fg-muted: oklch(74.9% 0 0deg);
-        --fg-subtle: oklch(67.3% 0 0deg);
-        --border: oklch(26.9% 0 0deg);
-        --border-subtle: oklch(23.9% 0 0deg);
-        --border-hover: oklch(37.1% 0 0deg);
-        --accent: oklch(78.7% 12.8% 230.318deg);
-    }
+:root[data-theme='dark'] {
+    @include dark-tokens;
+}
 
-    html {
-        color-scheme: dark;
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        @include dark-tokens;
+    }
+}
+
+@each $name in sky, coral, amber, emerald, violet, magenta, neutral {
+    :root[data-accent='#{$name}'] {
+        --accent: var(--swatch-#{$name});
     }
 }
 
@@ -61,6 +94,11 @@ body {
 a {
     color: inherit;
     text-decoration: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 code,

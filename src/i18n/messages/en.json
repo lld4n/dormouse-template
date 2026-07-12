@@ -7,10 +7,17 @@
         "hint": "This archive is private. Sign in as the owner to continue.",
         "cta": "Sign in with GitHub"
     },
-    "error": {
-        "title": "something went wrong",
-        "details": "technical details",
-        "retry": "try again"
+    "settings": {
+        "title": "settings",
+        "tagline": "appearance and language, stored in this browser",
+        "back": "back",
+        "appearance": "appearance",
+        "theme": "theme",
+        "theme_system": "system",
+        "theme_light": "light",
+        "theme_dark": "dark",
+        "accent": "accent color",
+        "language": "language"
     },
     "localeSwitcher": {
         "label": "Language"
