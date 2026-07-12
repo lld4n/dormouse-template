@@ -4,11 +4,12 @@ import { GeistSans } from 'geist/font/sans';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale } from 'next-intl/server';
 
-import { ErrorScreen } from '@/components/ErrorScreen';
+import { ErrorScreen } from '@/components/feedback/ErrorScreen';
 import { isAuthConfigured, isPublicMode, missingAuthEnv } from '@/lib/config';
 import { readSettings } from '@/settings/read';
 
 import './globals.scss';
+import 'yet-another-react-lightbox/styles.css';
 
 export const metadata: Metadata = {
     title: 'Dormouse',

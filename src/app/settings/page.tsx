@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
-import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { Button } from '@/components/ui/Button';
 import { ButtonLink } from '@/components/ui/ButtonLink';
 import { setAccent, setTheme } from '@/settings/actions';

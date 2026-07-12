@@ -24,7 +24,9 @@
         "next-intl": "4.13.2",
         "react": "19.2.4",
         "react-dom": "19.2.4",
-        "server-only": "0.0.1"
+        "recharts": "3.9.2",
+        "server-only": "0.0.1",
+        "yet-another-react-lightbox": "3.32.1"
     },
     "devDependencies": {
         "@antfu/eslint-config": "9.1.0",

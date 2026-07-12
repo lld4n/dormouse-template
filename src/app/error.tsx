@@ -1,6 +1,6 @@
 'use client';
 
-import { ErrorScreen } from '@/components/ErrorScreen';
+import { ErrorScreen } from '@/components/feedback/ErrorScreen';
 import { Button } from '@/components/ui/Button';
 
 interface ErrorPageProps {

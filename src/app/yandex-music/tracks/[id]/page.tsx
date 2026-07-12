@@ -4,10 +4,10 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 import { notFound } from 'next/navigation';
-import { CoverLightbox } from '@/components/CoverLightbox';
+import { ChartHistory } from '@/components/charts/ChartHistory';
+import { CoverLightbox } from '@/components/media/CoverLightbox';
 import { ButtonLink } from '@/components/ui/ButtonLink';
 import {
-    coverUrl,
     getAlbum,
     getArtist,
     getChart,
@@ -17,7 +17,6 @@ import {
 } from '@/lib/data/yandex-music';
 import { formatDate, formatDuration, formatMonth } from '@/lib/format';
 
-import { ChartSparkline } from './chart-sparkline';
 import styles from './page.module.scss';
 
 export async function generateMetadata({
@@ -78,7 +77,6 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
         ),
     ]);
 
-    const cover = coverUrl(track.cover, 400);
     const yandexUrl = track.albums[0]
         ? `https://music.yandex.ru/album/${track.albums[0]}/track/${record.id}`
         : `https://music.yandex.ru/track/${record.id}`;
@@ -121,17 +119,12 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
             </header>
 
             <section className={styles.hero}>
-                {cover ? (
-                    <CoverLightbox
-                        thumbSrc={cover}
-                        fullSrc={coverUrl(track.cover, 1000) ?? cover}
-                        alt={track.title}
-                        thumbSize={280}
-                        thumbClassName={styles.cover}
-                    />
-                ) : (
-                    <div className={styles.coverFallback} />
-                )}
+                <CoverLightbox
+                    cover={track.cover}
+                    title={track.title}
+                    thumbSize={280}
+                    thumbClassName={styles.cover}
+                />
                 <div className={styles.info}>
                     <h1 className={styles.title}>
                         {track.title}
@@ -153,10 +146,10 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
                         ))}
                     </p>
                     <p className={styles.meta}>
-                        {formatDuration(track.durationMs)}
+                        {track.durationMs > 0 ? formatDuration(track.durationMs) : null}
                         {albums.map(([albumId, album]) => (
                             <span key={albumId}>
-                                {' · '}
+                                {track.durationMs > 0 || albumId !== track.albums[0] ? ' · ' : ''}
                                 <Link
                                     href={`/yandex-music/albums/${albumId}`}
                                     className={styles.entityLink}
@@ -194,16 +187,18 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
                             </Link>
                         </p>
                     ) : null}
-                    <p>
-                        <a
-                            href={yandexUrl}
-                            className={styles.external}
-                            rel="noreferrer"
-                            target="_blank"
-                        >
-                            {t('openInYandex')} ↗
-                        </a>
-                    </p>
+                    {track.available ? (
+                        <p>
+                            <a
+                                href={yandexUrl}
+                                className={styles.external}
+                                rel="noreferrer"
+                                target="_blank"
+                            >
+                                {t('openInYandex')} ↗
+                            </a>
+                        </p>
+                    ) : null}
                 </div>
             </section>
 
@@ -312,7 +307,11 @@ export default async function TrackPage({ params }: PageProps<'/yandex-music/tra
                                 </div>
                             ) : null}
                         </div>
-                        <ChartSparkline snapshots={chartSnapshots} locale={locale} />
+                        <ChartHistory
+                            snapshots={chartSnapshots}
+                            locale={locale}
+                            listenersLabel={t('chartListeners')}
+                        />
                         {chartSnapshots.length >= 2 ? (
                             <div className={styles.sparklineDates}>
                                 <span>{formatDate(chartSnapshots[0]!.snapshotDate, locale)}</span>

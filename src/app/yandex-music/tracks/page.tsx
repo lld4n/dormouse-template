@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import type { TrackIndexEntry } from '@/lib/data/yandex-music-track-index';
 import { getLocale, getTranslations } from 'next-intl/server';
-import Image from 'next/image';
-
 import Link from 'next/link';
+import { CoverImage } from '@/components/media/CoverImage';
 import { ButtonLink } from '@/components/ui/ButtonLink';
-import { coverUrl } from '@/lib/data/yandex-music';
 import { getTracksIndex } from '@/lib/data/yandex-music-track-index';
 
 import styles from './page.module.scss';
@@ -108,25 +106,18 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
             ) : (
                 <ul className={styles.grid}>
                     {visible.map((track) => {
-                        const cover = coverUrl(track.cover, 200);
                         return (
                             <li key={track.id}>
                                 <Link
                                     href={`/yandex-music/tracks/${track.id}`}
                                     className={styles.card}
                                 >
-                                    {cover ? (
-                                        <Image
-                                            src={cover}
-                                            alt=""
-                                            width={64}
-                                            height={64}
-                                            className={styles.cardCover}
-                                            unoptimized
-                                        />
-                                    ) : (
-                                        <div className={styles.cardCoverFallback} />
-                                    )}
+                                    <CoverImage
+                                        cover={track.cover}
+                                        title={track.title}
+                                        size={200}
+                                        className={styles.cardCover}
+                                    />
                                     <span className={styles.cardText}>
                                         <span className={styles.cardTitle}>
                                             {track.title}

@@ -1,0 +1,18 @@
+.placeholder {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 1.35em;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--fg) 88%, transparent);
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--accent) 34%, var(--bg-muted)),
+            var(--bg-subtle)
+        ),
+        var(--bg-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: inherit;
+}

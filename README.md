@@ -55,6 +55,12 @@ environment when `SECRETS_CONTEXT` isn't set:
 YANDEX_MUSIC_TOKEN=... bun run scripts/main.ts
 ```
 
+## Implementation choices
+
+Prefer a maintained library for complex, interaction-heavy UI such as charts,
+lightboxes, dialogs and comboboxes. Keep custom components for the product’s
+own visual language and small, domain-specific behavior.
+
 ## Next.js app
 
 The app lives in [`src/app/`](src/app) and is currently a blank canvas
