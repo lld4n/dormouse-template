@@ -1,0 +1,22 @@
+.main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.hint {
+    max-width: 420px;
+    color: var(--fg-muted);
+    text-align: center;
+}

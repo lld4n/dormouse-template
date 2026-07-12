@@ -1,0 +1,18 @@
+{
+    "home": {
+        "tagline": "a personal archive of your data",
+        "version": "v{version}"
+    },
+    "login": {
+        "hint": "This archive is private. Sign in as the owner to continue.",
+        "cta": "Sign in with GitHub"
+    },
+    "error": {
+        "title": "something went wrong",
+        "details": "technical details",
+        "retry": "try again"
+    },
+    "localeSwitcher": {
+        "label": "Language"
+    }
+}

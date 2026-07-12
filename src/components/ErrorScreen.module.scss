@@ -1,0 +1,56 @@
+.main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.name {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.message {
+    color: var(--fg-muted);
+    text-align: center;
+}
+
+.details {
+    width: 100%;
+    max-width: 640px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.summary {
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--fg-subtle);
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        background: color-mix(in srgb, var(--fg) 5%, transparent);
+    }
+}
+
+.stack {
+    max-height: 320px;
+    padding: 12px;
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--fg-muted);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    background: var(--bg-subtle);
+    border-top: 1px solid var(--border-subtle);
+}

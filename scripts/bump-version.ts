@@ -14,6 +14,9 @@
  * Usage: bun scripts/bump-version.ts <major|minor|patch>
  */
 
+// Top-level await requires this file to be a module in tsconfig's eyes.
+export {};
+
 const KINDS = ['major', 'minor', 'patch'] as const;
 type Kind = (typeof KINDS)[number];
 

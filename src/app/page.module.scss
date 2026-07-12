@@ -1,0 +1,40 @@
+.main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.header {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.hero {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 48px;
+    text-align: center;
+}
+
+.logo {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.tagline {
+    font-size: 18px;
+    color: var(--fg-muted);
+}
+
+.meta {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--fg-subtle);
+}
