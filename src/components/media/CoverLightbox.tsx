@@ -1,5 +1,6 @@
 'use client';
 
+import { X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import Zoom from 'yet-another-react-lightbox/plugins/zoom';
@@ -8,6 +9,8 @@ import { coverProxyUrl } from '@/lib/covers';
 
 import { CoverImage } from './CoverImage';
 import styles from './CoverLightbox.module.scss';
+
+const iconProps = { size: 20, strokeWidth: 1.75 };
 
 interface CoverLightboxProps {
     cover: string;
@@ -39,7 +42,13 @@ export function CoverLightbox({ cover, title, thumbSize, thumbClassName }: Cover
                     slides={[{ src: full, alt: title }]}
                     plugins={[Zoom]}
                     carousel={{ finite: true, preload: 0 }}
-                    render={{ buttonPrev: () => null, buttonNext: () => null }}
+                    render={{
+                        buttonPrev: () => null,
+                        buttonNext: () => null,
+                        iconClose: () => <X {...iconProps} />,
+                        iconZoomIn: () => <ZoomIn {...iconProps} />,
+                        iconZoomOut: () => <ZoomOut {...iconProps} />,
+                    }}
                     zoom={{ maxZoomPixelRatio: 6, scrollToZoom: true }}
                 />
             ) : null}

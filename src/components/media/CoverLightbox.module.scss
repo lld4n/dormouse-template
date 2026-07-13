@@ -4,3 +4,26 @@
     background: none;
     border: none;
 }
+
+// Lightbox is a portal appended outside this module's DOM tree, so its
+// controls are styled globally here (the only place the library is used).
+// stylelint-disable-next-line selector-pseudo-class-no-unknown -- :global is a CSS Modules pseudo-class, not plain CSS
+:global(.yarl__button) {
+    color: rgb(255 255 255 / 78%);
+    background: transparent;
+    border-radius: var(--radius);
+    filter: none;
+    transition:
+        background-color 0.15s,
+        color 0.15s;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+        color: rgb(255 255 255 / 100%);
+        background: rgb(255 255 255 / 12%);
+    }
+
+    &:disabled {
+        color: rgb(255 255 255 / 32%);
+    }
+}
