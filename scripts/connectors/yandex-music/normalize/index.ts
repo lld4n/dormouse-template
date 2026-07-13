@@ -5,6 +5,7 @@ import { readdir } from 'node:fs/promises';
 import { logger } from '../../../shared/logger.ts';
 import { writeAlbumIndex } from './album-index.ts';
 import { AlbumStore, collectAlbums } from './albums.ts';
+import { writeArtistIndex } from './artist-index.ts';
 import { ArtistStore, collectArtists } from './artists.ts';
 import { ChartStore } from './charts.ts';
 import { buildHistory, mergeHistory } from './history.ts';
@@ -154,6 +155,7 @@ export async function normalizeYandexMusic(): Promise<void> {
     ]);
     const indexedTracks = await writeTrackIndex(newFiles.at(-1)!);
     const indexedAlbums = await writeAlbumIndex(newFiles.at(-1)!);
+    const indexedArtists = await writeArtistIndex(newFiles.at(-1)!);
 
     // Cursor advance is intentionally last: if anything above throws, this
     // line never runs and the next invocation safely reprocesses the same
@@ -168,5 +170,6 @@ export async function normalizeYandexMusic(): Promise<void> {
         historySessions: allNewHistoryItems.length,
         indexedTracks,
         indexedAlbums,
+        indexedArtists,
     });
 }

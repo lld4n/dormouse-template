@@ -1,18 +1,14 @@
 import type { Metadata } from 'next';
-import type { AlbumSnapshot } from '@/lib/data/yandex-music';
+import type { ArtistSnapshot } from '@/lib/data/yandex-music';
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 import { notFound } from 'next/navigation';
+import { CoverImage } from '@/components/media/CoverImage';
 import { CoverLightbox } from '@/components/media/CoverLightbox';
 import { ButtonLink } from '@/components/ui/ButtonLink';
-import {
-    AlbumType,
-    getAlbum,
-    getArtist,
-    getTracksListenStats,
-    latest,
-} from '@/lib/data/yandex-music';
+import { ArtistDisclaimer, getArtist, getTracksListenStats, latest } from '@/lib/data/yandex-music';
+import { getAlbumsIndex } from '@/lib/data/yandex-music-album-index';
 import { getTracksIndex } from '@/lib/data/yandex-music-track-index';
 import { formatDate, formatMonth } from '@/lib/format';
 
@@ -20,62 +16,61 @@ import styles from './page.module.scss';
 
 export async function generateMetadata({
     params,
-}: PageProps<'/yandex-music/albums/[id]'>): Promise<Metadata> {
+}: PageProps<'/yandex-music/artists/[id]'>): Promise<Metadata> {
     const { id } = await params;
-    const album = latest(await getAlbum(id));
-    return { title: album ? `${album.title} — Dormouse` : 'Dormouse' };
+    const artist = latest(await getArtist(id));
+    return { title: artist ? `${artist.name} — Dormouse` : 'Dormouse' };
 }
 
 const DIFF_FIELDS = [
-    'title',
-    'version',
-    'type',
-    'releaseDate',
-    'genre',
-    'artists',
-    'labels',
-    'trackCount',
-    'explicit',
+    'name',
+    'various',
     'cover',
-] as const satisfies readonly (keyof AlbumSnapshot)[];
+    'cutoutCover',
+    'disclaimers',
+] as const satisfies readonly (keyof ArtistSnapshot)[];
 
-function diffValue(field: (typeof DIFF_FIELDS)[number], snapshot: AlbumSnapshot): string {
+function diffValue(field: (typeof DIFF_FIELDS)[number], snapshot: ArtistSnapshot): string {
     const value = snapshot[field];
-    if (field === 'cover') {
-        return '…';
+    if (field === 'cover' || field === 'cutoutCover') {
+        return value ? '…' : '—';
     }
     if (Array.isArray(value)) {
-        return value.join(', ');
+        return value.join(', ') || '—';
     }
     return String(value ?? '—');
 }
 
-export default async function AlbumPage({ params }: PageProps<'/yandex-music/albums/[id]'>) {
+export default async function ArtistPage({ params }: PageProps<'/yandex-music/artists/[id]'>) {
     const { id } = await params;
-    const record = await getAlbum(id);
-    const album = latest(record);
-    if (!record || !album) {
+    const record = await getArtist(id);
+    const artist = latest(record);
+    if (!record || !artist) {
         notFound();
     }
 
-    const [t, locale, tracksIndex] = await Promise.all([
-        getTranslations('album'),
+    const [t, locale, tracksIndex, albumsIndex] = await Promise.all([
+        getTranslations('artist'),
         getLocale(),
         getTracksIndex(),
+        getAlbumsIndex(),
     ]);
-    const artists = await Promise.all(
-        album.artists.map(
-            async (artistId) => [artistId, latest(await getArtist(artistId))] as const,
-        ),
-    );
 
-    const albumTracks = tracksIndex.filter((track) => track.albums.some((a) => a.id === id));
     const collator = new Intl.Collator(locale);
-    const sortedTracks = [...albumTracks].sort((a, b) => collator.compare(a.title, b.title));
-    const stats = await getTracksListenStats(albumTracks.map((track) => track.id));
 
-    const yandexUrl = `https://music.yandex.ru/album/${id}`;
+    const artistAlbums = albumsIndex
+        .filter((album) => album.artists.some((a) => a.id === id))
+        .sort((a, b) => b.releaseDate - a.releaseDate);
+
+    const artistTracks = tracksIndex.filter((track) => track.artists.some((a) => a.id === id));
+    const sortedTracks = [...artistTracks].sort(
+        (a, b) => b.listens - a.listens || collator.compare(a.title, b.title),
+    );
+    const stats = await getTracksListenStats(artistTracks.map((track) => track.id));
+
+    const yandexUrl = `https://music.yandex.ru/artist/${id}`;
     const maxMonthCount = Math.max(1, ...stats.byMonth.map(({ count }) => count));
+    const isForeignAgent = artist.disclaimers.includes(ArtistDisclaimer.ForeignAgent);
 
     const metadataChanges = record.snapshots
         .slice(1)
@@ -98,8 +93,8 @@ export default async function AlbumPage({ params }: PageProps<'/yandex-music/alb
                     <ButtonLink href="/" size="sm">
                         dormouse
                     </ButtonLink>
-                    <ButtonLink href="/yandex-music/albums" size="sm">
-                        {t('allAlbums')}
+                    <ButtonLink href="/yandex-music/artists" size="sm">
+                        {t('allArtists')}
                     </ButtonLink>
                 </div>
                 <ButtonLink href="/settings" size="sm">
@@ -109,49 +104,19 @@ export default async function AlbumPage({ params }: PageProps<'/yandex-music/alb
 
             <section className={styles.hero}>
                 <CoverLightbox
-                    cover={album.cover}
-                    title={album.title}
+                    cover={artist.cover}
+                    title={artist.name}
                     thumbSize={280}
                     thumbClassName={styles.cover}
                 />
                 <div className={styles.info}>
-                    <h1 className={styles.title}>
-                        {album.title}
-                        {album.version ? (
-                            <span className={styles.version}> {album.version}</span>
-                        ) : null}
-                    </h1>
-                    <p className={styles.artists}>
-                        {artists.map(([artistId, artist], index) => (
-                            <span key={artistId}>
-                                {index > 0 ? ', ' : ''}
-                                <Link
-                                    href={`/yandex-music/artists/${artistId}`}
-                                    className={styles.entityLink}
-                                >
-                                    {artist?.name ?? `#${artistId}`}
-                                </Link>
-                            </span>
-                        ))}
-                    </p>
-                    <p className={styles.meta}>
-                        {formatDate(album.releaseDate, locale)}
-                        {album.genre ? ` · ${album.genre}` : ''}
-                        {' · '}
-                        {t('trackCount', { count: album.trackCount })}
-                    </p>
+                    <h1 className={styles.title}>{artist.name}</h1>
                     <div className={styles.badges}>
-                        {album.type === AlbumType.Single ? (
-                            <span className={styles.badge}>{t('single')}</span>
+                        {artist.various ? (
+                            <span className={styles.badge}>{t('various')}</span>
                         ) : null}
-                        {album.type === AlbumType.Compilation ? (
-                            <span className={styles.badge}>{t('compilation')}</span>
-                        ) : null}
-                        {album.explicit ? (
-                            <span className={styles.badge}>{t('explicit')}</span>
-                        ) : null}
-                        {album.veryImportant ? (
-                            <span className={styles.badge}>{t('veryImportant')}</span>
+                        {isForeignAgent ? (
+                            <span className={styles.badge}>{t('foreignAgent')}</span>
                         ) : null}
                     </div>
                     <p>
@@ -164,6 +129,37 @@ export default async function AlbumPage({ params }: PageProps<'/yandex-music/alb
                             {t('openInYandex')} ↗
                         </a>
                     </p>
+                </div>
+            </section>
+
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>{t('albumsTitle')}</h2>
+                <div className={styles.card}>
+                    {artistAlbums.length === 0 ? (
+                        <p className={styles.muted}>{t('noAlbums')}</p>
+                    ) : (
+                        <ul className={styles.albumGrid}>
+                            {artistAlbums.map((album) => (
+                                <li key={album.id}>
+                                    <Link
+                                        href={`/yandex-music/albums/${album.id}`}
+                                        className={styles.albumCard}
+                                    >
+                                        <CoverImage
+                                            cover={album.cover}
+                                            title={album.title}
+                                            size={200}
+                                            className={styles.albumCover}
+                                        />
+                                        <span className={styles.albumTitle}>{album.title}</span>
+                                        <span className={styles.albumMeta}>
+                                            {new Date(album.releaseDate).getFullYear()}
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             </section>
 

@@ -19,6 +19,7 @@ export type {
     Artist,
     ArtistSnapshot,
 } from '../../../scripts/connectors/yandex-music/models/artist';
+export { ArtistDisclaimer } from '../../../scripts/connectors/yandex-music/models/artist';
 export type { Chart, ChartSnapshot } from '../../../scripts/connectors/yandex-music/models/chart';
 export type {
     HistoryContext,
@@ -137,8 +138,8 @@ export const getTrackListenStats = cache(async (trackId: string): Promise<Listen
     return computeListenStats((item) => item.tracks.filter((id) => id === trackId).length);
 });
 
-/** Aggregates listens across every track on an album (a session playing two of the album's tracks counts twice). */
-export const getAlbumListenStats = cache(async (trackIds: string[]): Promise<ListenStats> => {
+/** Aggregates listens across an arbitrary set of tracks — an album's tracklist, an artist's discography, etc. (a session playing two of them counts twice). */
+export const getTracksListenStats = cache(async (trackIds: string[]): Promise<ListenStats> => {
     const idSet = new Set(trackIds);
     return computeListenStats((item) => item.tracks.filter((id) => idSet.has(id)).length);
 });
