@@ -19,15 +19,16 @@ export default async function SettingsPage() {
 
     return (
         <main className={styles.main}>
-            <header className={styles.header}>
-                <div className={styles.headerRow}>
-                    <h1 className={styles.title}>{t('title')}</h1>
-                    <ButtonLink href="/" size="sm">
-                        {t('back')}
-                    </ButtonLink>
-                </div>
-                <p className={styles.tagline}>{t('tagline')}</p>
+            <header className={styles.topBar}>
+                <ButtonLink href="/" size="sm">
+                    dormouse
+                </ButtonLink>
             </header>
+
+            <div className={styles.heading}>
+                <h1 className={styles.title}>{t('title')}</h1>
+                <p className={styles.tagline}>{t('tagline')}</p>
+            </div>
 
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>{t('appearance')}</h2>
