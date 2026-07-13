@@ -4,40 +4,10 @@ import type { HistoryItem } from '../models/history.ts';
 import type { TrackIndex, TrackIndexEntry } from '../models/track-index.ts';
 import type { Track } from '../models/track.ts';
 
-import { readdir } from 'node:fs/promises';
+import { listJsonNames, readEntities } from './index-shared.ts';
 
 const DATA_ROOT = 'data/yandex-music';
 const INDEX_FILE = `${DATA_ROOT}/index/tracks.json`;
-const READ_CONCURRENCY = 32;
-
-async function listJsonNames(directory: string): Promise<string[]> {
-    try {
-        return (await readdir(directory)).filter((name) => name.endsWith('.json')).sort();
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            return [];
-        }
-        throw error;
-    }
-}
-
-async function readEntities<T>(directory: string): Promise<Map<string, T>> {
-    const names = await listJsonNames(directory);
-    const entities = new Map<string, T>();
-    let next = 0;
-
-    await Promise.all(
-        Array.from({ length: Math.min(READ_CONCURRENCY, names.length) }, async () => {
-            while (next < names.length) {
-                const name = names[next++]!;
-                const id = name.slice(0, -'.json'.length);
-                entities.set(id, await Bun.file(`${directory}/${name}`).json());
-            }
-        }),
-    );
-
-    return entities;
-}
 
 async function collectListens(): Promise<Map<string, { count: number; lastAt: number }>> {
     const listens = new Map<string, { count: number; lastAt: number }>();

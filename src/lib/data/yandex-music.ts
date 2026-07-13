@@ -14,6 +14,7 @@ export type {
     Album,
     AlbumSnapshot,
 } from '../../../scripts/connectors/yandex-music/models/album';
+export { AlbumType } from '../../../scripts/connectors/yandex-music/models/album';
 export type {
     Artist,
     ArtistSnapshot,
@@ -87,20 +88,21 @@ export const getHistoryMonth = cache(async (month: string): Promise<HistoryItem[
     return (await readJson<HistoryItem[]>('history', `${month}.json`)) ?? [];
 });
 
-export interface TrackListenStats {
+export interface ListenStats {
     total: number;
-    /** Epoch ms of the first/last listening session containing the track. */
+    /** Epoch ms of the first/last listening session containing the track(s). */
     firstAt: number | null;
     lastAt: number | null;
     /** One entry per archive month (zeroes included), oldest first. */
     byMonth: { month: string; count: number }[];
-    /** Only contexts the track was actually played through, most-played first. */
+    /** Only contexts actually played through, most-played first. */
     byContext: { context: ContextType; count: number }[];
 }
 
-export const getTrackListenStats = cache(async (trackId: string): Promise<TrackListenStats> => {
+/** Shared aggregation: `countInItem` returns how many of a history item's plays should count (0 to skip it entirely). */
+async function computeListenStats(countInItem: (item: HistoryItem) => number): Promise<ListenStats> {
     const months = await listHistoryMonths();
-    const byMonth: TrackListenStats['byMonth'] = [];
+    const byMonth: ListenStats['byMonth'] = [];
     const contextCounts = new Map<ContextType, number>();
     let total = 0;
     let firstAt: number | null = null;
@@ -110,12 +112,7 @@ export const getTrackListenStats = cache(async (trackId: string): Promise<TrackL
         const items = await getHistoryMonth(month);
         let monthCount = 0;
         for (const item of items) {
-            let inItem = 0;
-            for (const id of item.tracks) {
-                if (id === trackId) {
-                    inItem += 1;
-                }
-            }
+            const inItem = countInItem(item);
             if (inItem === 0) {
                 continue;
             }
@@ -134,6 +131,16 @@ export const getTrackListenStats = cache(async (trackId: string): Promise<TrackL
         .sort((a, b) => b.count - a.count);
 
     return { total, firstAt, lastAt, byMonth, byContext };
+}
+
+export const getTrackListenStats = cache(async (trackId: string): Promise<ListenStats> => {
+    return computeListenStats((item) => item.tracks.filter((id) => id === trackId).length);
+});
+
+/** Aggregates listens across every track on an album (a session playing two of the album's tracks counts twice). */
+export const getAlbumListenStats = cache(async (trackIds: string[]): Promise<ListenStats> => {
+    const idSet = new Set(trackIds);
+    return computeListenStats((item) => item.tracks.filter((id) => idSet.has(id)).length);
 });
 
 /** `cover` fields store a protocol-less URL with a `%%` size placeholder. */

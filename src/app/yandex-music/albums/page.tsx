@@ -1,21 +1,24 @@
 import type { Metadata } from 'next';
-import type { TrackIndexEntry } from '@/lib/data/yandex-music-track-index';
+import type { AlbumIndexEntry } from '@/lib/data/yandex-music-album-index';
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { SearchSortControls } from '@/components/controls/SearchSortControls';
 import { CoverImage } from '@/components/media/CoverImage';
 import { ButtonLink } from '@/components/ui/ButtonLink';
-import { getTracksIndex } from '@/lib/data/yandex-music-track-index';
+import { AlbumType } from '@/lib/data/yandex-music';
+import { getAlbumsIndex } from '@/lib/data/yandex-music-album-index';
 
 import styles from './page.module.scss';
 
 export const metadata: Metadata = {
-    title: 'Tracks — Dormouse',
+    title: 'Albums — Dormouse',
 };
 
 const PER_PAGE = 48;
-const SORTS = ['listens', 'title', 'recent'] as const;
+const SORTS = ['listens', 'title', 'recent', 'release'] as const;
+const TYPES = ['all', 'album', 'single', 'compilation'] as const;
 type Sort = (typeof SORTS)[number];
+type TypeFilter = (typeof TYPES)[number];
 
 function pickParam(value: string | string[] | undefined): string | undefined {
     return typeof value === 'string' ? value : undefined;
@@ -35,21 +38,38 @@ function buildQuery(params: Record<string, string | undefined>, page: number): s
     return search ? `?${search}` : '';
 }
 
-export default async function TracksPage({ searchParams }: PageProps<'/yandex-music/tracks'>) {
+function matchesType(entry: AlbumIndexEntry, type: TypeFilter): boolean {
+    switch (type) {
+        case 'single':
+            return entry.type === AlbumType.Single;
+        case 'compilation':
+            return entry.type === AlbumType.Compilation;
+        case 'album':
+            return entry.type === undefined;
+        default:
+            return true;
+    }
+}
+
+export default async function AlbumsPage({ searchParams }: PageProps<'/yandex-music/albums'>) {
     const raw = await searchParams;
     const [t, locale, index] = await Promise.all([
-        getTranslations('tracks'),
+        getTranslations('albums'),
         getLocale(),
-        getTracksIndex(),
+        getAlbumsIndex(),
     ]);
 
     const q = pickParam(raw.q)?.trim() ?? '';
     const sortParam = pickParam(raw.sort);
     const sort: Sort = SORTS.includes(sortParam as Sort) ? (sortParam as Sort) : 'listens';
+    const typeParam = pickParam(raw.type);
+    const type: TypeFilter = TYPES.includes(typeParam as TypeFilter)
+        ? (typeParam as TypeFilter)
+        : 'all';
     const needle = q.toLocaleLowerCase();
-    const matches = (track: TrackIndexEntry) => !needle || track.search.includes(needle);
+    const matches = (album: AlbumIndexEntry) => !needle || album.search.includes(needle);
 
-    const filtered = index.filter((track) => matches(track));
+    const filtered = index.filter((album) => matches(album) && matchesType(album, type));
 
     const collator = new Intl.Collator(locale);
     const sorted = [...filtered].sort((a, b) => {
@@ -58,6 +78,8 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                 return collator.compare(a.title, b.title);
             case 'recent':
                 return b.firstSeen - a.firstSeen;
+            case 'release':
+                return b.releaseDate - a.releaseDate;
             default:
                 return b.listens - a.listens || collator.compare(a.title, b.title);
         }
@@ -70,6 +92,7 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
     const currentParams = {
         q: q || undefined,
         sort: sort === 'listens' ? undefined : sort,
+        type: type === 'all' ? undefined : type,
     };
 
     return (
@@ -89,7 +112,7 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
             </div>
 
             <SearchSortControls
-                key={`${q}:${sort}`}
+                key={`${q}:${sort}:${type}`}
                 initialQuery={q}
                 placeholder={t('searchPlaceholder')}
                 containerClassName={styles.filters}
@@ -105,6 +128,16 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                         })),
                         className: styles.select,
                     },
+                    {
+                        key: 'type',
+                        initialValue: type,
+                        defaultValue: 'all',
+                        options: TYPES.map((option) => ({
+                            value: option,
+                            label: t(`type_${option}`),
+                        })),
+                        className: styles.select,
+                    },
                 ]}
             />
 
@@ -112,40 +145,40 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                 <p className={styles.empty}>{t('empty')}</p>
             ) : (
                 <ul className={styles.grid}>
-                    {visible.map((track) => {
+                    {visible.map((album) => {
+                        const year = new Date(album.releaseDate).getFullYear();
                         return (
-                            <li key={track.id}>
+                            <li key={album.id}>
                                 <Link
-                                    href={`/yandex-music/tracks/${track.id}`}
+                                    href={`/yandex-music/albums/${album.id}`}
                                     className={styles.card}
                                 >
                                     <CoverImage
-                                        cover={track.cover}
-                                        title={track.title}
+                                        cover={album.cover}
+                                        title={album.title}
                                         size={200}
                                         className={styles.cardCover}
                                     />
                                     <span className={styles.cardText}>
                                         <span className={styles.cardTitle}>
-                                            {track.title}
-                                            {track.version ? (
+                                            {album.title}
+                                            {album.version ? (
                                                 <span className={styles.cardVersion}>
                                                     {' '}
-                                                    {track.version}
+                                                    {album.version}
                                                 </span>
                                             ) : null}
                                         </span>
                                         <span className={styles.cardArtists}>
-                                            {track.artists.map(({ name }) => name).join(', ')}
+                                            {album.artists.map(({ name }) => name).join(', ')}
                                         </span>
-                                        {track.albums[0] ? (
-                                            <span className={styles.cardAlbum}>
-                                                {track.albums[0].title}
-                                            </span>
-                                        ) : null}
+                                        <span className={styles.cardMeta}>
+                                            {year || t('type_album')} ·{' '}
+                                            {t('trackCount', { count: album.trackCount })}
+                                        </span>
                                     </span>
-                                    {track.listens > 0 ? (
-                                        <span className={styles.cardListens}>×{track.listens}</span>
+                                    {album.listens > 0 ? (
+                                        <span className={styles.cardListens}>×{album.listens}</span>
                                     ) : null}
                                 </Link>
                             </li>
@@ -158,7 +191,7 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                 <nav className={styles.pagination} aria-label={t('pagination')}>
                     {page > 1 ? (
                         <ButtonLink
-                            href={`/yandex-music/tracks${buildQuery(currentParams, page - 1)}`}
+                            href={`/yandex-music/albums${buildQuery(currentParams, page - 1)}`}
                             size="sm"
                         >
                             ← {t('prev')}
@@ -169,7 +202,7 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
                     <span className={styles.pageInfo}>{t('page', { page, pages })}</span>
                     {page < pages ? (
                         <ButtonLink
-                            href={`/yandex-music/tracks${buildQuery(currentParams, page + 1)}`}
+                            href={`/yandex-music/albums${buildQuery(currentParams, page + 1)}`}
                             size="sm"
                         >
                             {t('next')} →
