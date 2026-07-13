@@ -4,7 +4,6 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 import { notFound } from 'next/navigation';
-import { CoverImage } from '@/components/media/CoverImage';
 import { CoverLightbox } from '@/components/media/CoverLightbox';
 import { ButtonLink } from '@/components/ui/ButtonLink';
 import {
@@ -181,12 +180,6 @@ export default async function AlbumPage({ params }: PageProps<'/yandex-music/alb
                                         href={`/yandex-music/tracks/${track.id}`}
                                         className={styles.trackRow}
                                     >
-                                        <CoverImage
-                                            cover={track.cover}
-                                            title={track.title}
-                                            size={96}
-                                            className={styles.trackCover}
-                                        />
                                         <span className={styles.trackText}>
                                             <span className={styles.trackTitle}>
                                                 {track.title}

@@ -12,6 +12,9 @@ import styles from './CoverLightbox.module.scss';
 
 const iconProps = { size: 20, strokeWidth: 1.75 };
 
+/** Thumbnail is fetched at a higher pixel size than its CSS box (`thumbSize`) so it stays sharp on high-DPI displays instead of looking pixelated when upscaled by the browser. */
+const THUMB_RESOLUTION_MULTIPLIER = 2;
+
 interface CoverLightboxProps {
     cover: string;
     title: string;
@@ -30,7 +33,7 @@ export function CoverLightbox({ cover, title, thumbSize, thumbClassName }: Cover
                     cover={cover}
                     title={title}
                     alt={title}
-                    size={thumbSize}
+                    size={thumbSize * THUMB_RESOLUTION_MULTIPLIER}
                     className={thumbClassName}
                     priority
                 />
