@@ -110,6 +110,7 @@
     flex-shrink: 0;
     width: 64px;
     height: 64px;
+    object-fit: cover;
     background: var(--bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius);

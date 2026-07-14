@@ -130,7 +130,11 @@
 
 .albumCover {
     width: 100%;
+
+    /* the `<img height>` attribute otherwise wins over `aspect-ratio` since nothing else here declared `height` */
+    height: auto;
     aspect-ratio: 1;
+    object-fit: cover;
     background: var(--bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius);
