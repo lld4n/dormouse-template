@@ -1,0 +1,71 @@
+.bars {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    padding-bottom: 4px;
+
+    // Safety net, not the primary layout: columns shrink to fit first
+    // (see .column's flex-shrink), so this only kicks in once a chart has
+    // more items than even a minimum column width allows.
+    overflow-x: auto;
+}
+
+// rtl + reversed item order keeps the visual order chronological while the
+// initial scroll position lands on the newest item — see BarChart's JSDoc.
+// Only meant for long time series; other charts rely on .bars' plain
+// (ltr) scroll fallback above instead. Columns get a fixed width here
+// (no shrinking) so a long series scrolls instead of squeezing every
+// label into illegibility.
+.scrollable {
+    direction: rtl;
+
+    .column {
+        flex: 0 0 var(--bar-column-width, 32px);
+    }
+}
+
+.column {
+    display: flex;
+    flex: 1 1 28px;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    min-width: 0;
+    direction: ltr;
+}
+
+.track {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    max-width: var(--bar-column-width, 40px);
+    height: 96px;
+}
+
+.bar {
+    width: 100%;
+    min-height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+}
+
+.label {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-subtle);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.value {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+    text-align: center;
+}

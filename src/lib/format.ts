@@ -35,3 +35,9 @@ export function formatMoney(amount: number, currency: string, locale: string): s
         maximumFractionDigits: 0,
     }).format(amount);
 }
+
+/** `isoWeekday` is Monday = 0 .. Sunday = 6. `2024-01-01` is a Monday — used purely as a stable reference date to get a locale weekday name, not as a real date. */
+export function formatWeekday(isoWeekday: number, locale: string): string {
+    const reference = new Date(Date.UTC(2024, 0, 1 + isoWeekday));
+    return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(reference);
+}

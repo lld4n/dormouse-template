@@ -28,3 +28,34 @@ export const getRide = cache(async (id: string): Promise<Ride | null> => {
         throw error;
     }
 });
+
+/**
+ * Reads every ride's full record — used by the overview page, which
+ * aggregates fields (`driver`, `car`, `surge`, `duration`, ...) the compact
+ * list index deliberately excludes. Deliberately plain `Promise.all` rather
+ * than `readEntities`'s batched concurrency (`scripts/shared/entity-index.ts`):
+ * that helper is built on `Bun.file`, which this Next.js server code doesn't
+ * assume is available, and at this dataset's scale (a personal ride
+ * archive, not a fetched-daily firehose) an unbatched `Promise.all` over
+ * every file is already cheap.
+ */
+export const getAllRides = cache(async (): Promise<Ride[]> => {
+    let names: string[];
+    try {
+        names = (await fs.readdir(path.join(DATA_ROOT, 'rides'))).filter((name) =>
+            name.endsWith('.json'),
+        );
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return [];
+        }
+        throw error;
+    }
+
+    return Promise.all(
+        names.map(async (name) => {
+            const raw = await fs.readFile(path.join(DATA_ROOT, 'rides', name), 'utf8');
+            return JSON.parse(raw) as Ride;
+        }),
+    );
+});
