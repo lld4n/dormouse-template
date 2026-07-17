@@ -154,6 +154,48 @@
         "metadataHistory": "история метаданных",
         "appearedIn": "эти данные появились в dormouse {date}"
     },
+    "taxi": {
+        "tariff_business": "Комфорт",
+        "tariff_econom": "Эконом",
+        "tariff_comfortplus": "Комфорт+",
+        "tariff_combo": "Вместе",
+        "tariff_vip": "Business",
+        "tariff_child_tariff": "Детский",
+        "payment_yandex_card": "Яндекс Пэй",
+        "payment_card": "карта",
+        "payment_cash": "наличные",
+        "status_finished": "завершена",
+        "status_cancelled": "отменена"
+    },
+    "rides": {
+        "settingsLink": "настройки",
+        "title": "поездки",
+        "found": "{count, plural, one {# поездка} few {# поездки} many {# поездок} other {# поездки}}",
+        "searchPlaceholder": "поиск по адресу или тарифу…",
+        "sort_recent": "сначала новые",
+        "sort_oldest": "сначала старые",
+        "sort_cost_desc": "сначала дорогие",
+        "sort_cost_asc": "сначала дешёвые",
+        "empty": "ничего не нашлось",
+        "pagination": "Пагинация",
+        "page": "стр. {page} / {pages}",
+        "prev": "назад",
+        "next": "вперёд"
+    },
+    "ride": {
+        "settingsLink": "настройки",
+        "allRides": "поездки",
+        "cancelled": "отменена",
+        "route": "маршрут",
+        "duration": "{minutes, plural, one {# минута} few {# минуты} many {# минут} other {# минуты}}",
+        "surge": "коэффициент ×{value}",
+        "cashback": "кэшбэк",
+        "tip": "чаевые",
+        "driver": "водитель",
+        "rating": "рейтинг",
+        "car": "машина",
+        "paymentMethod": "оплата"
+    },
     "localeSwitcher": {
         "label": "Язык"
     }

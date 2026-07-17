@@ -20,3 +20,18 @@ export function formatMonth(month: string, locale: string): string {
         new Date(year!, monthNumber! - 1, 1),
     );
 }
+
+export function formatDateTime(epochMs: number, locale: string): string {
+    return new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(epochMs);
+}
+
+export function formatMoney(amount: number, currency: string, locale: string): string {
+    return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 0,
+    }).format(amount);
+}

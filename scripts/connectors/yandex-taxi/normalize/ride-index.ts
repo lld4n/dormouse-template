@@ -19,16 +19,21 @@ export async function writeRideIndex(): Promise<number> {
     const rides = await readEntities<Ride>(`${DATA_ROOT}/rides`);
 
     const entries: RideIndexEntry[] = Array.from(rides.values())
-        .map((ride) => ({
-            id: ride.id,
-            created: ride.created,
-            tariff: ride.tariff,
-            status: ride.status,
-            cost: ride.cost,
-            currency: ride.currency,
-            source: ride.source.text,
-            destination: ride.destinations[0]?.text ?? '',
-        }))
+        .map((ride) => {
+            const source = ride.source.text;
+            const destination = ride.destinations[0]?.text ?? '';
+            return {
+                id: ride.id,
+                created: ride.created,
+                tariff: ride.tariff,
+                status: ride.status,
+                cost: ride.cost,
+                currency: ride.currency,
+                source,
+                destination,
+                search: [source, destination, ride.tariff].join(' ').toLocaleLowerCase(),
+            };
+        })
         .sort((a, b) => b.created - a.created);
 
     const index: RideIndex = entries;

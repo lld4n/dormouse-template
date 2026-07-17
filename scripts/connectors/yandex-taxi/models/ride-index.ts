@@ -20,6 +20,8 @@ export interface RideIndexEntry {
     source: string;
     /** First destination's text only — later stops (multi-stop rides) are in the full `Ride` record. */
     destination: string;
+    /** Lowercased `source + destination + tariff`, precomputed so the list page's search box is a plain substring check. */
+    search: string;
 }
 
 export type RideIndex = RideIndexEntry[];

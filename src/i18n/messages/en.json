@@ -154,6 +154,48 @@
         "metadataHistory": "metadata history",
         "appearedIn": "this data first appeared in dormouse on {date}"
     },
+    "taxi": {
+        "tariff_business": "Comfort",
+        "tariff_econom": "Econom",
+        "tariff_comfortplus": "Comfort+",
+        "tariff_combo": "Together",
+        "tariff_vip": "Business",
+        "tariff_child_tariff": "Child",
+        "payment_yandex_card": "Yandex Pay",
+        "payment_card": "Card",
+        "payment_cash": "Cash",
+        "status_finished": "finished",
+        "status_cancelled": "cancelled"
+    },
+    "rides": {
+        "settingsLink": "settings",
+        "title": "rides",
+        "found": "{count, plural, one {# ride} other {# rides}}",
+        "searchPlaceholder": "search by address or tariff…",
+        "sort_recent": "most recent",
+        "sort_oldest": "oldest first",
+        "sort_cost_desc": "most expensive",
+        "sort_cost_asc": "cheapest",
+        "empty": "nothing found",
+        "pagination": "Pagination",
+        "page": "page {page} / {pages}",
+        "prev": "prev",
+        "next": "next"
+    },
+    "ride": {
+        "settingsLink": "settings",
+        "allRides": "rides",
+        "cancelled": "cancelled",
+        "route": "route",
+        "duration": "{minutes, plural, one {# minute} other {# minutes}}",
+        "surge": "×{value} surge",
+        "cashback": "cashback",
+        "tip": "tip",
+        "driver": "driver",
+        "rating": "rating",
+        "car": "car",
+        "paymentMethod": "paid with"
+    },
     "localeSwitcher": {
         "label": "Language"
     }

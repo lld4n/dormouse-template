@@ -1,0 +1,151 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+    max-width: 1100px;
+    padding: 24px clamp(16px, 4vw, 40px) 64px;
+    margin: 0 auto;
+}
+
+.topBar {
+    display: flex;
+    justify-content: space-between;
+}
+
+.topBarGroup {
+    display: flex;
+    gap: 8px;
+}
+
+.hero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.map {
+    flex-shrink: 0;
+    width: 340px;
+}
+
+.info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 260px;
+}
+
+.date {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--fg-subtle);
+}
+
+.route {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+}
+
+.arrow {
+    color: var(--fg-subtle);
+}
+
+.badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.badge {
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    background: var(--bg-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+}
+
+.badgeAlert {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.cost {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sectionTitle {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.statsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statValue {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 20px;
+}
+
+.statLabel {
+    font-size: 12px;
+    color: var(--fg-subtle);
+}
+
+.carColor {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+}
+
+@media (width <= 560px) {
+    .hero {
+        flex-direction: column;
+    }
+
+    .map {
+        width: 100%;
+    }
+}
