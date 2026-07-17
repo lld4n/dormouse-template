@@ -4,7 +4,7 @@ import type { Artist } from '../models/artist.ts';
 import type { HistoryItem } from '../models/history.ts';
 import type { Track } from '../models/track.ts';
 
-import { listJsonNames, readEntities } from './index-shared.ts';
+import { listJsonNames, readEntities } from '../../../shared/entity-index.ts';
 
 const DATA_ROOT = 'data/yandex-music';
 const INDEX_FILE = `${DATA_ROOT}/index/albums.json`;

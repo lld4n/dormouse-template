@@ -7,6 +7,7 @@
  */
 export enum ConnectorService {
     YANDEX_MUSIC = 'yandex-music',
+    YANDEX_TAXI = 'yandex-taxi',
 }
 
 /**

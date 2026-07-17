@@ -1,6 +1,7 @@
 import type { Connector } from './types.ts';
 
 import { yandexMusicConnector } from './yandex-music/index.ts';
+import { yandexTaxiConnector } from './yandex-taxi/index.ts';
 
 /**
  * Single source of truth for which connectors the pipeline runs.
@@ -9,4 +10,4 @@ import { yandexMusicConnector } from './yandex-music/index.ts';
  * the final wiring step after implementing it (see `Connector` in
  * `types.ts` for the full checklist); nothing else needs to change.
  */
-export const CONNECTORS: Connector[] = [yandexMusicConnector];
+export const CONNECTORS: Connector[] = [yandexMusicConnector, yandexTaxiConnector];
