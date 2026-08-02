@@ -1,7 +1,18 @@
 {
     "home": {
         "tagline": "a personal archive of your data",
-        "version": "v{version}"
+        "version": "v{version}",
+        "yandexMusic": "Yandex Music"
+    },
+    "musicHub": {
+        "settingsLink": "settings",
+        "title": "Yandex Music",
+        "tracks": "tracks",
+        "albums": "albums",
+        "artists": "artists",
+        "trackCount": "{count, plural, one {# track} other {# tracks}}",
+        "albumCount": "{count, plural, one {# album} other {# albums}}",
+        "artistCount": "{count, plural, one {# artist} other {# artists}}"
     },
     "login": {
         "hint": "This archive is private. Sign in as the owner to continue.",

@@ -18,6 +18,9 @@ export default async function Home() {
             <section className={styles.hero}>
                 <h1 className={styles.logo}>dormouse</h1>
                 <p className={styles.tagline}>{t('home.tagline')}</p>
+                <ButtonLink href="/yandex-music" variant="primary" className={styles.cta}>
+                    {t('home.yandexMusic')}
+                </ButtonLink>
                 <p className={styles.meta}>{t('home.version', { version: pkg.version })}</p>
             </section>
         </main>

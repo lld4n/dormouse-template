@@ -1,0 +1,64 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+    max-width: 1100px;
+    padding: 24px clamp(16px, 4vw, 40px) 64px;
+    margin: 0 auto;
+}
+
+.topBar {
+    display: flex;
+    justify-content: space-between;
+}
+
+.heading {
+    display: flex;
+    align-items: baseline;
+}
+
+.title {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.navGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.navCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 20px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition:
+        background 0.15s,
+        border-color 0.15s;
+
+    &:hover {
+        background: var(--bg-muted);
+        border-color: var(--border-hover);
+    }
+}
+
+.navIcon {
+    color: var(--fg-subtle);
+}
+
+.navLabel {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.navCount {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--fg-subtle);
+}

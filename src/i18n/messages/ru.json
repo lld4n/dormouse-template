@@ -1,7 +1,18 @@
 {
     "home": {
         "tagline": "личный архив твоих данных",
-        "version": "v{version}"
+        "version": "v{version}",
+        "yandexMusic": "Яндекс Музыка"
+    },
+    "musicHub": {
+        "settingsLink": "настройки",
+        "title": "Яндекс Музыка",
+        "tracks": "треки",
+        "albums": "альбомы",
+        "artists": "артисты",
+        "trackCount": "{count, plural, one {# трек} few {# трека} many {# треков} other {# трека}}",
+        "albumCount": "{count, plural, one {# альбом} few {# альбома} many {# альбомов} other {# альбома}}",
+        "artistCount": "{count, plural, one {# артист} few {# артиста} many {# артистов} other {# артиста}}"
     },
     "login": {
         "hint": "Этот архив приватный. Войди как владелец, чтобы продолжить.",
