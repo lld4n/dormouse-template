@@ -89,7 +89,6 @@ export default async function TracksPage({ searchParams }: PageProps<'/yandex-mu
             </div>
 
             <SearchSortControls
-                key={`${q}:${sort}`}
                 initialQuery={q}
                 placeholder={t('searchPlaceholder')}
                 containerClassName={styles.filters}

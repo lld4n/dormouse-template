@@ -91,7 +91,6 @@ export default async function RidesPage({ searchParams }: PageProps<'/yandex-tax
             </div>
 
             <SearchSortControls
-                key={`${q}:${sort}`}
                 initialQuery={q}
                 placeholder={t('searchPlaceholder')}
                 containerClassName={styles.filters}

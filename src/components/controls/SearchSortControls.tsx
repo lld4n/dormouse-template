@@ -40,6 +40,30 @@ export function SearchSortControls({
     const queryRef = useRef(initialQuery);
     const valuesRef = useRef(values);
 
+    // Sync a query/filter change that didn't originate here — back/forward navigation,
+    // a link elsewhere on the page — during render rather than an effect, and without a
+    // `key` on this component that would force a remount. Remounting would tear down and
+    // recreate the search `<input>`, dropping DOM focus and closing the on-screen
+    // keyboard on iOS every time a debounced search completes.
+    if (initialQuery !== queryRef.current) {
+        queryRef.current = initialQuery;
+        setQuery(initialQuery);
+    }
+
+    let nextValues = values;
+    for (const select of selects) {
+        if (nextValues[select.key] !== select.initialValue) {
+            if (nextValues === values) {
+                nextValues = { ...values };
+            }
+            nextValues[select.key] = select.initialValue;
+        }
+    }
+    if (nextValues !== values) {
+        valuesRef.current = nextValues;
+        setValues(nextValues);
+    }
+
     const navigate = useCallback(
         (nextQuery: string, nextValues: Record<string, string>) => {
             const params = new URLSearchParams();
