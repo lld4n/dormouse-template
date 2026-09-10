@@ -112,7 +112,6 @@ export default async function AlbumsPage({ searchParams }: PageProps<'/yandex-mu
             </div>
 
             <SearchSortControls
-                key={`${q}:${sort}:${type}`}
                 initialQuery={q}
                 placeholder={t('searchPlaceholder')}
                 containerClassName={styles.filters}

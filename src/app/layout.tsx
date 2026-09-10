@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
 import { NextIntlClientProvider } from 'next-intl';
@@ -14,6 +14,13 @@ import 'yet-another-react-lightbox/styles.css';
 export const metadata: Metadata = {
     title: 'Dormouse',
     description: 'A personal archive of your data',
+};
+
+export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
 };
 
 function ConfigurationError() {
