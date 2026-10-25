@@ -79,7 +79,7 @@ jobs:
 
             - uses: oven-sh/setup-bun@v2
               with:
-                  bun-version: latest
+                  bun-version: 1.4.3
 
             # Look for an open conflict issue from a previous run. If there is
             # one, check whether `template-sync` has since been merged into the
