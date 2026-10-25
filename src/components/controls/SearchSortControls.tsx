@@ -39,6 +39,33 @@ export function SearchSortControls({
     );
     const queryRef = useRef(initialQuery);
     const valuesRef = useRef(values);
+    const sentQueriesRef = useRef(new Set<string>());
+
+    // Sync a query/filter change that didn't originate here (back/forward navigation, a link
+    // elsewhere on the page) during render rather than an effect, and without a `key` on this
+    // component: remounting would recreate the search `<input>`, dropping DOM focus and closing
+    // the on-screen keyboard on iOS after every debounced search. Only reacts when the props
+    // themselves change, so a stale prop (URL not updated yet) never overwrites local state.
+    const [prevInitialQuery, setPrevInitialQuery] = useState(initialQuery);
+    if (initialQuery !== prevInitialQuery) {
+        setPrevInitialQuery(initialQuery);
+        // The echo of a query we navigated to ourselves must not clobber newer typing.
+        if (!sentQueriesRef.current.delete(initialQuery)) {
+            queryRef.current = initialQuery;
+            setQuery(initialQuery);
+        }
+    }
+
+    const initialValuesKey = JSON.stringify(selects.map((select) => select.initialValue));
+    const [prevInitialValuesKey, setPrevInitialValuesKey] = useState(initialValuesKey);
+    if (initialValuesKey !== prevInitialValuesKey) {
+        setPrevInitialValuesKey(initialValuesKey);
+        const nextValues = Object.fromEntries(
+            selects.map((select) => [select.key, select.initialValue]),
+        );
+        valuesRef.current = nextValues;
+        setValues(nextValues);
+    }
 
     const navigate = useCallback(
         (nextQuery: string, nextValues: Record<string, string>) => {
@@ -64,6 +91,7 @@ export function SearchSortControls({
         }
         const timeout = window.setTimeout(() => {
             queryRef.current = query;
+            sentQueriesRef.current.add(query);
             navigate(query, valuesRef.current);
         }, SEARCH_DELAY_MS);
         return () => window.clearTimeout(timeout);

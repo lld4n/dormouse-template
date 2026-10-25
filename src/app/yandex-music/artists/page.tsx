@@ -89,7 +89,6 @@ export default async function ArtistsPage({ searchParams }: PageProps<'/yandex-m
             </div>
 
             <SearchSortControls
-                key={`${q}:${sort}`}
                 initialQuery={q}
                 placeholder={t('searchPlaceholder')}
                 containerClassName={styles.filters}
